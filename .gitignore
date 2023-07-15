@@ -1,0 +1,4 @@
+.idea/
+cmake-build-debug/
+cmake-build-debug-clang-14/
+cmake-build-release/

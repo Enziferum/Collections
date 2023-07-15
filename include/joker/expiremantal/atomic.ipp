@@ -1,0 +1,5 @@
+namespace rstd {
+    extern "C" {
+
+    }
+}
