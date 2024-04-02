@@ -1,15 +1,15 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21)
 project(sandbox)
 
 set(CMAKE_CXX_STANDARD 17)
 set(SRC main.cpp)
 
-set(TSAN ON)
+set(USE_TSAN OFF)
 
 set(TSAN_COMPILE_FLAGS -fsanitize=thread -fno-sanitize-recover=all)
 set(TSAN_LINK_FLAGS -fsanitize=thread)
 
-if(TSAN)
+if(USE_TSAN)
     message(STATUS "Sanitize with Thread Sanitizer (TSAN)")
     add_compile_options(${TSAN_COMPILE_FLAGS})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${TSAN_LINK_FLAGS}")

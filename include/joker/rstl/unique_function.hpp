@@ -65,8 +65,8 @@ namespace rstl {
         unique_function(Func&& func) {
             static_assert(std::is_move_constructible<std::decay_t<Func>>::value,
                           "rstl::unique_function target must be move-constructible");
-//            if(m_bridge)
-//                m_bridge.reset();
+            if(m_bridge)
+                m_bridge.reset();
 
             using Func_D = std::decay_t<Func>;
             m_bridge = std::make_unique<specific_bridge<Func, R, Args...>>
@@ -118,8 +118,8 @@ namespace rstl {
             static_assert(std::is_move_constructible<std::decay_t<Func>>::value,
                           "rstl::unique_function target must be move-constructible");
 
-//            if(m_bridge)
-//                m_bridge.reset();
+            if(m_bridge)
+                m_bridge.reset();
 
             using func_d = std::decay_t<Func>;
             m_bridge = std::make_unique<specific_bridge<Func, void, Args...>>

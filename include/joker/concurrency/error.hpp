@@ -23,8 +23,6 @@ namespace concurrency {
             return std::holds_alternative<std::error_code>(m_error);
         }
 
-
-
         void throwIfError() {
             if(hasException())
                 std::rethrow_exception(std::get<std::exception_ptr>(m_error));

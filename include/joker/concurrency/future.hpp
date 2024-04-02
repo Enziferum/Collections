@@ -91,18 +91,17 @@ namespace concurrency {
     class future: private shared_future<R> {
     public:
         future() noexcept = default;
-
         future(const future& other) = delete;
         future& operator=(const future& other) = delete;
         future(future&& other) = default;
         future& operator=(future&& other) noexcept = default;
+        ~future() noexcept = default;
 
         using shared_future<R>::valid;
         using shared_future<R>::ready;
         using shared_future<R>::wait;
         using shared_future<R>::attach_cancellable_task_state;
 
-        ~future() noexcept = default;
 
         void swap(future& other) noexcept {
             std::swap(this->m_state, other.m_state);
@@ -111,8 +110,8 @@ namespace concurrency {
 
 
         shared_future<R> share() const {
-            if (this->m_state == nullptr) throw "no_state";
-            return shared_future<R>(std::move(this->m_state));
+            if (this -> m_state == nullptr) throw "no_state";
+            return shared_future<R>(std::move(this -> m_state));
         }
 
         Result<R> get()  {
@@ -124,48 +123,51 @@ namespace concurrency {
         }
 
         template<typename Func>
-        void subscribe(iexecutor& executor, Func&& func) {
-            if(!this->m_state)
+        auto subscribe(iexecutor& executor, Func&& func) -> future<decltype(func(std::declval<Result<R>>()))> {
+            if(!this -> m_state)
                 throw std::runtime_error("concurrency::future: state is nullptr");
-            auto state = this->m_state;
-            using R2 = decltype(func(std::declval<Result<typename R::type>>()));
-            packaged_task<Result<R2>()> task(executor,
-                                             [func = std::forward<Func>(func), fut = std::move(*this)]() mutable {
-                                                 return func(fut.get());
-                                             });
-            future<Result<R2>> f = task.get_future();
+            auto state = this -> m_state;
+            using R2 = decltype(func(std::declval<Result<R>>()));
+            packaged_task<R2()> task(executor, [func = std::forward<Func>(func), fut = std::move(*this)]() mutable {
+                return func(std::move(fut.nowait_get()));
+            });
 
-            std::lock_guard<std::mutex> lockGuard{state -> mutex};
-            if(state -> ready) {
-                executor.execute(std::move(task));
+            future<R2> f = task.get_future();
+            {
+                std::lock_guard<std::mutex> lockGuard{state -> mutex};
+                if(state -> ready) {
+                    executor.execute(std::move(task));
+                }
+                else {
+                    state -> m_subscription = std::make_shared<Task>(std::move(task));
+                }
             }
-            else {
-                state -> m_subscription = std::make_shared<Task>(std::move(task));
-            }
+
+            return f;
         }
 
         template<typename Func>
         auto then(iexecutor& executor, Func&& func)  {
-            if(!this->m_state)
+            if(!this -> m_state)
                 throw std::runtime_error("concurrency::future: state is nullptr");
-            auto state = this->m_state;
+            auto state = this -> m_state;
 
             using R2 = decltype(func(std::declval<Result<R>>()));
             packaged_task<R2()> task(executor,
                                      [func = std::forward<Func>(func), fut = std::move(*this)]() mutable {
-                return func(fut.get());
+                return func(fut.nowait_get());
             });
 
             future<R2> f = task.get_future();
 
-            {
+           // {
                 std::lock_guard<std::mutex> lockGuard(state -> mutex);
                 if (state -> ready) {
                     executor.execute(std::move(task));
                 } else {
                     state -> m_continuations.emplace_back(std::move(task));
                 }
-            }
+            //}
             return f;
         }
 
@@ -179,11 +181,11 @@ namespace concurrency {
         template<typename Func>
         future<R> recover(iexecutor& executor, Func&& func) {
             return this -> then(executor,
-                    [func = std::forward<Func>(func)](Result<R> x) {
+                    [func = std::forward<Func>(func)](Result<R>&& exceptionResult) {
                         try {
-                           return x.ValueOrThrow();
+                           return exceptionResult.ValueOrThrow();
                         } catch (...) {
-                            return func(std::current_exception());
+                            return func(std::move(Result<R>::Fail(std::current_exception())));
                         }
                     }
             );
@@ -200,6 +202,13 @@ namespace concurrency {
 
         explicit future(std::shared_ptr<shared_state<R>> state): shared_future<R>{state} {}
     private:
+        Result<R> nowait_get()  {
+            auto state = std::move(this -> m_state);
+            if(state -> exceptionPtr)
+                return Result<R>::Fail({state -> exceptionPtr});
+            return Result<R>::Ok(std::move(state -> value));
+        }
+    private:
         template<typename U>
         friend class promise;
     };
@@ -208,11 +217,12 @@ namespace concurrency {
     template<class R>
     struct shared_future {
 
-        std::shared_ptr<shared_state<R>> m_state;
-        std::shared_ptr<void> m_cancellable_task_state;
+        std::shared_ptr<shared_state<R>> m_state { nullptr };
+        std::shared_ptr<void> m_cancellable_task_state { nullptr };
 
         shared_future() = default;
         shared_future(std::shared_ptr<shared_state<R>> s) : m_state(s) {}
+        ~shared_future() = default;
 
         Result<R> get() const {
             wait();
@@ -264,124 +274,58 @@ namespace concurrency {
             }
             return result;
         }
-
-        template<class F>
-        auto next(F func)
-        {
-            return this->then(
-                    [func = std::move(func)](Result<R> x) {
-                        return func(x.get());
-                    }
-            );
-        }
-
-        template<class F>
-        auto recover(F func)
-        {
-            return this->then(
-                    [func = std::move(func)](Result<R> x) {
-                        try {
-                            return x.get();
-                        } catch (...) {
-                            return func(std::current_exception());
-                        }
-                    }
-            );
-        }
-
-        future<R> fallback_to(R fallback)
-        {
-            return this->recover(
-                    [fallback = std::move(fallback)](std::exception_ptr) {
-                        return fallback;
-                    }
-            );
-        }
     };
 
-//    template<>
-//    class future<void> {
-//    public:
-//        future() noexcept = default;
-//        future(const future& other) = delete;
-//        future& operator=(const future& other) = delete;
-//        future(future&& other) = default;
-//        future& operator=(future&& other) = default;
-//
-//        ~future() noexcept = default;
-//
-//        bool ready() const {
-//            if(!m_state)
-//                return false;
-//            std::lock_guard<std::mutex> lockGuard{m_state -> mutex};
-//            return m_state -> ready;
-//        }
-//
-//        bool valid() const {
-//            return (m_state != nullptr);
-//        }
-//
-//        void wait() const {
-//            if(!m_state) throw std::runtime_error("no state");
-//            {
-//                std::unique_lock<std::mutex> uniqueLock{m_state -> mutex};
-//                while(!m_state -> ready) {
-//                    m_state -> m_cond.wait(uniqueLock);
-//                }
-//            }
-//        }
-//
-//        void get()  {
-//            wait();
-//            auto state = std::move(m_state);
-//            if(state -> exceptionPtr)
-//                std::rethrow_exception(state -> exceptionPtr);
-//        }
-//
-//        template<typename Func>
-//        auto then(iexecutor& executor, Func&& func) && {
-////            if(!m_state)
-////                throw std::runtime_error("concurrency::future: state is nullptr");
-////            using R2 = decltype(func(std::move(*this)));
-////            packaged_task<R2()> task(executor,
-////                                     [func = std::forward<Func>(func), fut = std::move(*this)]() mutable {
-////                                         return func(std::move(fut));
-////                                     });
-////            future<R2> f = task.get_future();
-////
-////            std::lock_guard<std::mutex> lockGuard{m_state -> mutex};
-////            if(m_state -> ready) {
-////                executor.execute(std::move(task));
-////            }
-////            else {
-////                m_state -> m_continuations.emplace_back(std::move(task));
-////            }
-////            return f;
-//        }
-//
-//        template<typename Func>
-//        auto next(iexecutor& executor, Func&& func) {
-////            return this -> then([]() {
-////
-////            });
-//        }
-//
-//        template<typename Func>
-//        future<void> recover(Func&& func) {
-//
-//        }
-//
-//        future<void> fallback_to() {}
-//
-//    private:
-//        future(std::shared_ptr<shared_state<void>> state): m_state{std::move(state)} {}
-//    private:
-//        template<typename U>
-//        friend class promise;
-//
-//        std::shared_ptr<shared_state<void>> m_state{nullptr};
-//        std::shared_ptr<void> m_cancellable_task_state{nullptr};
-//    };
+    template<>
+    class future<void>: private shared_future<void> {
+    public:
+        future() noexcept = default;
+        future(const future& other) = delete;
+        future& operator=(const future& other) = delete;
+        future(future&& other) = default;
+        future& operator=(future&& other) = default;
+        ~future() noexcept = default;
+
+        using shared_future<void>::attach_cancellable_task_state;
+
+        bool ready() const {
+            if(!m_state)
+                return false;
+            std::lock_guard<std::mutex> lockGuard{m_state -> mutex};
+            return m_state -> ready;
+        }
+
+        bool valid() const {
+            return (m_state != nullptr);
+        }
+
+        void wait() const {
+            if(!m_state) throw std::runtime_error("no state");
+            {
+                std::unique_lock<std::mutex> uniqueLock{m_state -> mutex};
+                while(!m_state -> ready) {
+                    m_state -> m_cond.wait(uniqueLock);
+                }
+            }
+        }
+
+        void get()  {
+            wait();
+            auto state = std::move(m_state);
+            if(state -> exceptionPtr)
+                std::rethrow_exception(state -> exceptionPtr);
+        }
+
+
+    private:
+        future(std::shared_ptr<shared_state<void>> state): m_state{std::move(state)} {}
+    private:
+        template<typename U>
+        friend class promise;
+
+        std::shared_ptr<shared_state<void>> m_state{nullptr};
+        std::shared_ptr<void> m_cancellable_task_state{nullptr};
+    };
 
 
 
@@ -464,78 +408,78 @@ namespace concurrency {
         bool m_future_expired{false};
     };
 
-//    template<>
-//    class promise<void> {
-//    public:
-//        promise(): m_state(std::make_shared<shared_state<void>>()){}
-//        ~promise() {
-//            abandon_state();
-//        }
-//
-//        promise(const promise& other) = delete;
-//        promise& operator=(const promise& other) = delete;
-//        promise(promise&& other) = default;
-//
-//        promise& operator=(promise&& other) noexcept {
-//            if (this != &other) abandon_state();
-//            m_state = std::move(other.m_state);
-//            return *this;
-//        }
-//
-//        future<void> get_future() {
-//            if(!m_state)
-//                throw std::runtime_error("concurrency::future: nullptr state");
-//            if(m_future_expired)
-//                throw std::runtime_error("concurrency::future: future was expired already");
-//
-//            m_future_expired = true;
-//            return {m_state};
-//        }
-//
-//        /*
-//        void set_value(iexecutor& executor, R value) {
-//            if(!m_state)
-//                return;
-//
-//            m_state -> value = std::move(value);
-//            set_ready(executor);
-//        }
-//        */
-//
-//        void set_exception(std::exception_ptr exceptionPtr) {
-//            if(!m_state)
-//                return;
-//
-//            m_state -> exceptionPtr = std::move(exceptionPtr);
-//            set_ready();
-//        }
-//    private:
-//        explicit promise(iexecutor* executor):
-//                m_state(std::make_shared<shared_state<void>>()),
-//                m_executor(executor) {}
-//    private:
-//        void set_ready() {
-//            {
-//                std::lock_guard<std::mutex> lockGuard{m_state->mutex};
-//                m_state -> ready = true;
-//                for(auto& task: m_state -> m_continuations) {
-//                    //executor.execute(std::move(task));
-//                }
-//                m_state -> m_cond.notify_one();
-//            }
-//        }
-//
-//        void abandon_state() {
-//            if (m_state != nullptr && !m_state -> ready) {
-//                set_exception(std::make_exception_ptr("broken_promise"));
-//            }
-//        }
-//
-//    private:
-//        std::shared_ptr<shared_state<void>> m_state{nullptr};
-//        iexecutor* m_executor{nullptr};
-//        bool m_future_expired{false};
-//    };
+    template<>
+    class promise<void> {
+    public:
+        promise(): m_state(std::make_shared<shared_state<void>>()){}
+        ~promise() {
+            abandon_state();
+        }
+
+        promise(const promise& other) = delete;
+        promise& operator=(const promise& other) = delete;
+        promise(promise&& other) = default;
+
+        promise& operator=(promise&& other) noexcept {
+            if (this != &other) abandon_state();
+            m_state = std::move(other.m_state);
+            return *this;
+        }
+
+        future<void> get_future() {
+            if(!m_state)
+                throw std::runtime_error("concurrency::future: nullptr state");
+            if(m_future_expired)
+                throw std::runtime_error("concurrency::future: future was expired already");
+
+            m_future_expired = true;
+            return {m_state};
+        }
+
+        /*
+        void set_value(iexecutor& executor, R value) {
+            if(!m_state)
+                return;
+
+            m_state -> value = std::move(value);
+            set_ready(executor);
+        }
+        */
+
+        void set_exception(std::exception_ptr exceptionPtr) {
+            if(!m_state)
+                return;
+
+            m_state -> exceptionPtr = std::move(exceptionPtr);
+            set_ready();
+        }
+    private:
+        explicit promise(iexecutor* executor):
+                m_state(std::make_shared<shared_state<void>>()),
+                m_executor(executor) {}
+    private:
+        void set_ready() {
+            {
+                std::lock_guard<std::mutex> lockGuard{m_state->mutex};
+                m_state -> ready = true;
+                for(auto& task: m_state -> m_continuations) {
+                    //executor.execute(std::move(task));
+                }
+                m_state -> m_cond.notify_one();
+            }
+        }
+
+        void abandon_state() {
+            if (m_state != nullptr && !m_state -> ready) {
+                set_exception(std::make_exception_ptr("broken_promise"));
+            }
+        }
+
+    private:
+        std::shared_ptr<shared_state<void>> m_state{nullptr};
+        iexecutor* m_executor{nullptr};
+        bool m_future_expired{false};
+    };
 
     template<typename R, typename ... Args>
     class packaged_task<R(Args...)> {
@@ -595,70 +539,68 @@ namespace concurrency {
         bool m_promise_satisfied{false};
     };
 
-//    template<typename ... Args>
-//    class packaged_task<void(Args...)>{
-//    public:
-//        packaged_task() noexcept = default;
-//        packaged_task(const packaged_task& other) = delete;
-//        packaged_task& operator=(const packaged_task& other) = delete;
-//
-//        packaged_task(packaged_task&& other) = default;
-//        packaged_task& operator=(packaged_task&& other) noexcept = default;
-//
-//        template<typename Func,
-//                typename = std::enable_if_t<!std::is_same_v<packaged_task<void(Args...)>, std::decay_t<Func>>>>
-//        packaged_task(iexecutor& executor, Func&& func) {
-//            promise<void> p;
-//            m_future = p.get_future();
-//
-//            auto f_holder = [f = std::forward<Func>(func)]() mutable { return std::move(f); };
-//
-//            auto s = std::make_shared<decltype(f_holder)>(std::move(f_holder));
-//            std::weak_ptr<decltype(f_holder)> weak_s = s;
-//
-//            m_future.attach_cancellable_task_state(s);
-//
-//            m_task = [p = std::move(p), wptr = std::move(weak_s)](Args&& ... args) mutable {
-//                if (auto sptr = wptr.lock()) {
-//                    auto f = (*sptr)();
-//                    try {
-//                        f(std::forward<Args>(args)...);
-//                    } catch (...) {
-//                        p.set_exception(std::current_exception());
-//                    }
-//                }
-//            };
-//        }
-//
-//        ~packaged_task() = default;
-//
-//        future<void> get_future() {
-//            if(!m_task) throw std::runtime_error("no state");
-//            if(!m_future.valid()) throw std::runtime_error("no valid future");
-//            return std::move(m_future);
-//        }
-//
-//        [[nodiscard]]
-//        bool valid() const {
-//            return m_task;
-//        }
-//
-//        void operator()(Args&& ... args) {
-//            if(!m_task) throw std::runtime_error("no state");
-//            if(m_promise_satisfied) throw std::runtime_error("promise already satisfied");
-//            m_promise_satisfied = true;
-//            m_task(std::forward<Args>(args)...);
-//        }
-//    private:
-//        rstl::unique_function<void(Args...)> m_task;
-//        future<void> m_future;
-//        bool m_promise_satisfied{false};
-//    };
+    template<typename ... Args>
+    class packaged_task<void(Args...)>{
+    public:
+        packaged_task() noexcept = default;
+        packaged_task(const packaged_task& other) = delete;
+        packaged_task& operator=(const packaged_task& other) = delete;
+
+        packaged_task(packaged_task&& other) = default;
+        packaged_task& operator=(packaged_task&& other) noexcept = default;
+
+        template<typename Func,
+                typename = std::enable_if_t<!std::is_same_v<packaged_task<void(Args...)>, std::decay_t<Func>>>>
+        packaged_task(iexecutor& executor, Func&& func) {
+            promise<void> p;
+            m_future = p.get_future();
+
+            auto f_holder = [f = std::forward<Func>(func)]() mutable { return std::move(f); };
+            auto s = std::make_shared<decltype(f_holder)>(std::move(f_holder));
+            std::weak_ptr<decltype(f_holder)> weak_s = s;
+
+            m_future.attach_cancellable_task_state(s);
+
+            m_task = [p = std::move(p), wptr = std::move(weak_s)](Args&& ... args) mutable {
+                if (auto sptr = wptr.lock()) {
+                    auto f = (*sptr)();
+                    try {
+                        f(std::forward<Args>(args)...);
+                    } catch (...) {
+                        p.set_exception(std::current_exception());
+                    }
+                }
+            };
+        }
+
+        ~packaged_task() = default;
+
+        future<void> get_future() {
+            if(!m_task) throw std::runtime_error("no state");
+            if(!m_future.valid()) throw std::runtime_error("no valid future");
+            return std::move(m_future);
+        }
+
+        [[nodiscard]]
+        bool valid() const {
+            return m_task;
+        }
+
+        void operator()(Args&& ... args) {
+            if(!m_task) throw std::runtime_error("no state");
+            if(m_promise_satisfied) throw std::runtime_error("promise already satisfied");
+            m_promise_satisfied = true;
+            m_task(std::forward<Args>(args)...);
+        }
+    private:
+        rstl::unique_function<void(Args...)> m_task;
+        future<void> m_future;
+        bool m_promise_satisfied{false};
+    };
 
 
     template<typename Func, typename ... Args>
-    auto async(iexecutor& executor, Func&& func, Args&& ... args) ->
-    future<decltype(func(std::forward<Args>(args)...))>
+    auto async(iexecutor& executor, Func&& func, Args&& ... args) -> future<decltype(func(std::forward<Args>(args)...))>
     {
         using R = decltype(func(std::forward<Args>(args)...));
 

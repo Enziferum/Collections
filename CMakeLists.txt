@@ -4,7 +4,7 @@ project(Joker)
 option(BUILD_TESTS "Build Tests?" ON)
 option(BUILD_BENCHMARK "Build Benchmark?" ON)
 option(BUILD_SANDBOX "Build Sandbox?" ON)
-option(USE_TWIST "Use Twist library?" ON)
+option(USE_TWIST "Use Twist library?" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 file(GLOB_RECURSE SRC source/*.cpp)
@@ -13,7 +13,13 @@ add_library(${PROJECT_NAME} ${SRC})
 target_include_directories(${PROJECT_NAME} PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>")
-target_link_libraries(${PROJECT_NAME} twist)
+
+set(LIBS)
+if (USE_TWIST)
+    set(LIBS twist)
+endif ()
+
+target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 
 if(BUILD_TESTS)
