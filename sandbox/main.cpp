@@ -1,8 +1,7 @@
 #include <collections/concurrency/thread_pool.hpp>
 #include <collections/concurrency/future.hpp>
+
 #include <iostream>
-
-
 using namespace std::chrono_literals;
 
 void single_subscribe(concurrency::iexecutor& executor) {
