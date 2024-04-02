@@ -34,7 +34,7 @@ if(BUILD_BENCHMARK)
     add_subdirectory(benchmark)
 endif()
 
-if(BUILD_BENCHMARK)
+if(BUILD_SANDBOX)
     add_subdirectory(sandbox)
 endif()
 

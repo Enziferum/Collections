@@ -77,9 +77,9 @@ int main () {
     concurrency::thread_pool pool{4};
 
     single_subscribe(pool);
-    many_then(pool);
+    /*many_then(pool);
     then_recover(pool);
-
+*/
     std::cout << "Continue our work!" << std::endl;
 
     pool.waitIdle();

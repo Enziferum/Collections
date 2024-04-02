@@ -8,6 +8,7 @@ namespace concurrency {
     class iexecutor {
     public:
         virtual ~iexecutor() = 0;
+
         virtual void execute(Task task) = 0;
     };
 }
