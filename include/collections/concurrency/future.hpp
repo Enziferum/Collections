@@ -11,7 +11,7 @@
 #include <system_error>
 #include <type_traits>
 
-#include "joker/rstl/unique_function.hpp"
+#include "collections/rstl/unique_function.hpp"
 #include "iexecutor.hpp"
 #include "result.hpp"
 
@@ -618,4 +618,7 @@ namespace concurrency {
         return f;
     }
 
-}
+} // namespace concurrency
+
+/// \brief Idea that future can't be using somewhere else, because we work with subscribe / then but not get() method directly.
+#define MARK_UNUSABLE(f) std::move(f);

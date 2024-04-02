@@ -2,9 +2,9 @@
 #include <vector>
 #include <memory>
 
-#include <joker/queue/dummy_threadsafe_queue.hpp>
-#include <joker/queue/threadsafe_queue.hpp>
-#include <joker/queue/work_stealing_queue.hpp>
+#include <collections/queue/dummy_threadsafe_queue.hpp>
+#include <collections/queue/threadsafe_queue.hpp>
+#include <collections/queue/work_stealing_queue.hpp>
 
 #include "iexecutor.hpp"
 #include "twist_wrapper.hpp"

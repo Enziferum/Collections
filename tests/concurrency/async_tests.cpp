@@ -1,61 +1,66 @@
 #include <gtest/gtest.h>
-#include <joker/concurrency/future.hpp>
-#include <joker/concurrency/thread_pool.hpp>
+#include <collections/concurrency/future.hpp>
+#include <collections/concurrency/thread_pool.hpp>
 
 using namespace std::chrono_literals;
 
-class ConcurrencyTest: public ::testing::Test {
-public:
-    void TearDown() override {
-        pool.waitIdle();
-        pool.join();
-    }
-protected:
-    concurrency::thread_pool pool{4};
-};
+namespace {
+    class ConcurrencyTest: public ::testing::Test {
+    public:
+        void TearDown() override {
+            pool.waitIdle();
+            pool.join();
+        }
+    protected:
+        concurrency::thread_pool pool{4};
+    };
+}
+
 
 TEST_F(ConcurrencyTest, test_async_subscribe) {
     auto testId = std::this_thread::get_id();
 
-    concurrency::async(pool, []() -> int {
+    auto f = concurrency::async(pool, []() -> int {
         std::this_thread::sleep_for(1s);
         return 41;
-    }).subscribe(pool, [testId](concurrency::Result<int> result) {
-        auto subscribeId = std::this_thread::get_id();
-        // EXPECT_EQ(testId, subscribeId);
+    }).subscribe(pool, [](concurrency::Result<int>&& result) {
         int value = result.ValueOrThrow() + 1;
-        EXPECT_EQ(value, 45);
-        return 1;
+        EXPECT_EQ(value, 42);
     });
+
+    MARK_UNUSABLE(f)
 }
 
-/*
 TEST_F(ConcurrencyTest, test_async) {
-    concurrency::async(pool, []() -> int {
+    auto f = concurrency::async(pool, []() -> int {
         return 42;
     });
+
+    MARK_UNUSABLE(f)
 }
 
 TEST_F(ConcurrencyTest, test_async_single_then) {
-    concurrency::async(pool, []() -> int {
+    auto f = concurrency::async(pool, []() -> int {
         return 42;
-    }).then(pool, [](concurrency::Result<int> result) -> int {
-        int val = result.get();
+    }).then(pool, [](concurrency::Result<int>&& result) -> int {
+        int val = result.ValueOrThrow();
         EXPECT_EQ(val, 42);
-        return val + 1;
     });
+
+    MARK_UNUSABLE(f)
 }
 
 TEST_F(ConcurrencyTest, test_async_chain_then) {
-    concurrency::async(pool, []() -> int {
-        return 42;
-    }).then(pool, [](concurrency::Result<int> result) -> int {
-        int val = result.get();
-        EXPECT_EQ(val, 42);
+    auto f = concurrency::async(pool, []() -> int {
+        return 41;
+    }).then(pool, [](concurrency::Result<int>&& result) -> int {
+        int val = result.ValueOrThrow();
+        EXPECT_EQ(val, 41);
         return val + 1;
-    }).then(pool, [](concurrency::Result<int> result) -> int {
-        int val = result.get();
-        EXPECT_EQ(val, 43);
-        return 0;
+    }).then(pool, [](concurrency::Result<int>&& result) -> int {
+        int val = result.ValueOrThrow();
+        EXPECT_EQ(val, 42);
     });
-}*/
+
+    MARK_UNUSABLE(f)
+}

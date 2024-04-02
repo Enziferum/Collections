@@ -1,9 +1,8 @@
-#include <joker/concurrency/thread_pool.hpp>
-#include <joker/concurrency/future.hpp>
+#include <collections/concurrency/thread_pool.hpp>
+#include <collections/concurrency/future.hpp>
 #include <iostream>
 
-/// \brief Idea that future can't be using somewhere else, because we work with subscribe / then but not get() method directly.
-#define MARK_UNUSABLE(f) std::move(f);
+
 using namespace std::chrono_literals;
 
 void single_subscribe(concurrency::iexecutor& executor) {

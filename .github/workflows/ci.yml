@@ -1,0 +1,79 @@
+name: Engine Build
+
+on:
+  push:
+  pull_request:
+    types: [opened, edited, reopened]
+
+permissions: write-all
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Configure
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j 2
+
+      - name: Run tests
+        run: ctest --output-junit tests.xml --output-on-failure --test-dir ${{github.workspace}}/build/tests
+        continue-on-error: true
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: tests-ubuntu            # Name of the check run which will be created
+          path: build/tests/*.xml    # Path to test results
+          reporter: java-junit        # Format of test results
+        continue-on-error: true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux-assets
+          path: ${{github.workspace}}/linter
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Configure
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON
+        shell: cmd
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        shell: cmd
+
+      - name: Run tests
+        run: ctest --output-junit tests.xml --output-on-failure --test-dir ${{github.workspace}}/build/tests
+        continue-on-error: true
+        shell: cmd
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: tests-windows           # Name of the check run which will be created
+          path: build/tests/*.xml    # Path to test results
+          reporter: java-junit        # Format of test results
+        continue-on-error: true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows-assets
+          path: ${{github.workspace}}/linter
