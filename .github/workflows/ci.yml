@@ -1,4 +1,4 @@
-name: Engine Build
+name: Collections Build
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Configure
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -BUILD_TESTS=ON
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j 2
