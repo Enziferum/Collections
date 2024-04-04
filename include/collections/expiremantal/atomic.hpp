@@ -15,9 +15,10 @@ namespace rstd {
         atomic& operator=(atomic&& other) = delete;
         ~atomic() noexcept;
 
-        bool load(T value, memory_order order = memory_order::seq);
+        T load(memory_order order = memory_order::seq);
         void store(T value, memory_order order = memory_order::seq);
 
+        bool exchange(T value, memory_order order = memory_order::seq);
         bool compare_exchange_weak(T value, memory_order order = memory_order::seq);
         bool compare_exchange_strong(T value, memory_order order = memory_order::seq);
     private:
