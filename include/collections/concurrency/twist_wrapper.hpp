@@ -1,14 +1,16 @@
 #pragma once
 
-//#include <twist/ed/stdlike/atomic.hpp>
-//#include <twist/ed/stdlike/condition_variable.hpp>
-//#include <twist/ed/stdlike/mutex.hpp>
-//#include <twist/ed/stdlike/thread.hpp>
-
-#include <atomic>
-#include <mutex>
-#include <condition_variable>
-#include <thread>
+#ifdef USE_TWIST
+    #include <twist/ed/stdlike/atomic.hpp>
+    #include <twist/ed/stdlike/condition_variable.hpp>
+    #include <twist/ed/stdlike/mutex.hpp>
+    #include <twist/ed/stdlike/thread.hpp>
+#else
+    #include <atomic>
+    #include <mutex>
+    #include <condition_variable>
+    #include <thread>
+#endif
 
 namespace concurrency {
 

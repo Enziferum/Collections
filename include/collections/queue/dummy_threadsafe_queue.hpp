@@ -4,8 +4,9 @@
 #include <memory>
 #include <mutex>
 
-namespace net {
+namespace concurrency {
 
+    /// \brief Dummy Realization ThreadSafe Queue based on mutex and std::queue
     template<typename T>
     class dummy_threadsafe_queue {
     public:
@@ -28,7 +29,10 @@ namespace net {
 
         bool try_pop(T& value) {
             std::lock_guard<std::mutex> lock(m_queueMutex);
-            value = m_queue.front();
+            if(m_queue.empty())
+                return false;
+
+            value = std::move(m_queue.front());
             m_queue.pop();
             return true;
         }

@@ -19,6 +19,16 @@ add_library(${PROJECT_NAME} ${INCL} ${SRC})
 target_include_directories(${PROJECT_NAME} PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
 
+if (USE_TSAN)
+
+    message(STATUS "Sanitize with Thread Sanitizer (TSAN)")
+    set(TSAN_COMPILE_FLAGS -fsanitize=thread -fno-sanitize-recover=all)
+    set(TSAN_LINK_FLAGS -fsanitize=thread)
+
+    target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=thread)
+    target_link_options(${PROJECT_NAME}  PRIVATE -fsanitize=thread)
+endif ()
+
 set(LIBS)
 if (USE_TWIST)
     set(LIBS twist)
@@ -34,7 +44,7 @@ if(BUILD_BENCHMARK)
     add_subdirectory(benchmark)
 endif()
 
-if(BUILD_BENCHMARK)
+if(BUILD_SANDBOX)
     add_subdirectory(sandbox)
 endif()
 

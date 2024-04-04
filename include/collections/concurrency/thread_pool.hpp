@@ -9,36 +9,9 @@
 #include "iexecutor.hpp"
 #include "twist_wrapper.hpp"
 #include "future.hpp"
+#include "task_count.hpp"
 
 namespace concurrency {
-
-    class TaskCount {
-        public:
-            void Add(size_t count = 1) {
-                count_.fetch_add(count, std::memory_order_relaxed);
-            }
-
-            void Done() {
-                if (count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
-                    std::lock_guard guard(mutex_);
-                    idle_.notify_all();
-                }
-            }
-
-            // Multi-shot
-            void WaitIdle() {
-                std::unique_lock lock(mutex_);
-                while (count_.load() > 0) {
-                    idle_.wait(lock);
-                }
-            }
-
-        private:
-        atomic<size_t> count_{0};
-        mutex mutex_;
-        condition_variable idle_;
-    };
-
 
     class thread_pool: public iexecutor {
     public:
@@ -57,15 +30,22 @@ namespace concurrency {
         void waitIdle();
         std::size_t tasksValue();
     private:
-        void thread_function();
+        void thread_function(unsigned threadIndex);
+        void run_pending_tasks();
+
+        bool pop_task_local(Task& task);
+        bool pop_task_global(Task& task);
+        bool pop_task_other_thread(Task& task);
     private:
         std::vector<std::thread> m_threads;
-        std::vector<std::unique_ptr<work_stealing_queue>> m_stealQueues;
+        using TaskStealingQueue = concurrency::work_stealing_queue<Task>;
+        concurrency::dummy_threadsafe_queue<Task> m_globalQueue;
 
-        net::dummy_threadsafe_queue<Task> m_globalQueue;
-        static thread_local work_stealing_queue* m_localQueue;
+        std::vector<std::unique_ptr<TaskStealingQueue>> m_stealQueues;
+        static thread_local TaskStealingQueue* m_localQueue;
+        static thread_local unsigned m_threadIndex;
 
-        std::atomic_bool m_done;
+        std::atomic_bool m_done { false };
         TaskCount m_taskCount;
     };
 
