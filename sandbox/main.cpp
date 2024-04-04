@@ -6,7 +6,6 @@ using namespace std::chrono_literals;
 
 void single_subscribe(concurrency::iexecutor& executor) {
     auto first = []() {
-        std::this_thread::sleep_for(1s);
         std::cout << "first done!" << std::endl;
         return 42;
     };
@@ -20,17 +19,17 @@ void single_subscribe(concurrency::iexecutor& executor) {
 
 void many_then(concurrency::iexecutor& executor) {
     auto first = []() {
-        std::this_thread::sleep_for(1s);
+        //std::this_thread::sleep_for(1s);
         std::cout << "first done!" << std::endl;
         return 40;
     };
     auto second = [](concurrency::Result<int>&& result) {
-        std::this_thread::sleep_for(1s);
+        //std::this_thread::sleep_for(1s);
         std::cout << "second done!" << std::endl;
         return result.ValueOrThrow() + 1;
     };
     auto third = [](concurrency::Result<int>&& result) {
-        std::this_thread::sleep_for(1s);
+        //std::this_thread::sleep_for(1s);
         std::cout << "third finally print result: " << result.ValueOrThrow() + 1 << std::endl;
     };
     auto f = concurrency::async(executor, first)
@@ -49,7 +48,7 @@ struct ThenRecoverException: public std::runtime_error {
 
 void then_recover(concurrency::iexecutor& executor) {
     auto first = []() {
-        std::this_thread::sleep_for(1s);
+        // std::this_thread::sleep_for(1s);
         std::cout << "first done!" << std::endl;
         /// ... some code why we should throw exception
         throw ThenRecoverException("then_recover first throw");
@@ -57,12 +56,12 @@ void then_recover(concurrency::iexecutor& executor) {
     };
     /// handle possible exception
     auto second = [](concurrency::Result<int>&& result) {
-        std::this_thread::sleep_for(1s);
+        //std::this_thread::sleep_for(1s);
         std::cout << "second process!" << std::endl;
         return 1;
     };
     auto third = [](concurrency::Result<int>&& result) {
-        std::this_thread::sleep_for(1s);
+        //std::this_thread::sleep_for(1s);
         std::cout << "third finally print result: " << result.ValueOrThrow() + 1 << std::endl;
     };
     auto f = concurrency::async(executor, first)
@@ -72,18 +71,18 @@ void then_recover(concurrency::iexecutor& executor) {
     MARK_UNUSABLE(f)
 }
 
-int main () {
-
+void run() {
     concurrency::thread_pool pool{4};
 
     single_subscribe(pool);
-    /*many_then(pool);
+    many_then(pool);
     then_recover(pool);
-*/
     std::cout << "Continue our work!" << std::endl;
 
     pool.waitIdle();
-    pool.join();
+}
 
+int main () {
+    run();
     return 0;
 }

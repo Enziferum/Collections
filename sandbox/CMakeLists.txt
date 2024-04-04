@@ -6,11 +6,11 @@ set(SRC main.cpp)
 
 set(USE_TSAN OFF)
 
+
 set(TSAN_COMPILE_FLAGS -fsanitize=thread -fno-sanitize-recover=all)
 set(TSAN_LINK_FLAGS -fsanitize=thread)
 
 if(USE_TSAN)
-    message(STATUS "Sanitize with Thread Sanitizer (TSAN)")
     add_compile_options(${TSAN_COMPILE_FLAGS})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${TSAN_LINK_FLAGS}")
 endif()

@@ -45,7 +45,7 @@ namespace concurrency {
         static thread_local TaskStealingQueue* m_localQueue;
         static thread_local unsigned m_threadIndex;
 
-        std::atomic_bool m_done;
+        std::atomic_bool m_done { false };
         TaskCount m_taskCount;
     };
 

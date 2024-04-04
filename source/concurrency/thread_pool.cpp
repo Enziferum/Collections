@@ -1,16 +1,19 @@
 #include <collections/concurrency/thread_pool.hpp>
+#include <iostream>
 
 namespace concurrency {
 
     thread_local unsigned thread_pool::m_threadIndex = 0;
     thread_local thread_pool::TaskStealingQueue* thread_pool::m_localQueue = nullptr;
 
+
     thread_pool::thread_pool(unsigned int threadCount) {
         try {
-            for(int i = 0; i < threadCount; ++i) {
+            for(int i = 0; i < threadCount; ++i)
                 m_stealQueues.push_back(std::make_unique<TaskStealingQueue>());
+
+            for(int i = 0; i < threadCount; ++i)
                 m_threads.emplace_back(&thread_pool::thread_function, this, i);
-            }
 
             m_done.store(false, std::memory_order::memory_order_relaxed);
         }
@@ -54,7 +57,6 @@ namespace concurrency {
 
         while(!m_done.load(std::memory_order::memory_order_relaxed))
             run_pending_tasks();
-
     }
 
     bool thread_pool::pop_task_local(Task& task) {
