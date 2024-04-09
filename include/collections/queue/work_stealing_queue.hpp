@@ -2,7 +2,7 @@
 #include <deque>
 #include <memory>
 
-namespace concurrency {
+namespace collections::concurrency {
 
     template<typename T>
     class work_stealing_queue {
@@ -53,4 +53,5 @@ namespace concurrency {
         std::deque<T> m_deque;
         mutable std::mutex m_mutex;
     };
-}
+
+} // namespace collections::concurrency

@@ -1,7 +1,7 @@
 #pragma once
 #include "memory_order.hpp"
 
-namespace rstd {
+namespace collections::rstd {
 
     /// TODO(a.raag)
     /// std::enable_if_t<std::is_pod<T>::value>

@@ -1,9 +1,15 @@
 #pragma once
+#include <type_traits>
+#include <memory>
 
-namespace rstd {
+namespace collections::rstd {
+    namespace priv {
+        class mutex_impl;
+    }
+
     class mutex {
     public:
-        mutex();
+        mutex() = default;
         mutex(const mutex& other) = delete;
         mutex& operator=(const mutex& other) = delete;
         mutex(mutex&& other) = delete;
@@ -11,14 +17,17 @@ namespace rstd {
         ~mutex() noexcept;
 
         void lock();
+        bool try_lock();
         void unlock();
+    private:
+        std::unique_ptr<priv::mutex_impl> m_mutexImpl;
     };
 
 
-    template<typename T>
+    template<typename T, typename = std::enable_if_t<std::is_base_of_v<mutex, T>>>
     class lock_guard {
     public:
-        lock_guard(const T& mutex): m_mutex{mutex} { m_mutex.lock(); }
+        explicit lock_guard(const T& mutex): m_mutex{mutex} { m_mutex.lock(); }
         ~lock_guard() noexcept { m_mutex.unlock(); }
 
         lock_guard(const lock_guard& other) = delete;
@@ -26,6 +35,6 @@ namespace rstd {
         lock_guard(lock_guard&& other) = delete;
         lock_guard& operator=(lock_guard&& other) = delete;
     private:
-        T m_mutex;
+        const T& m_mutex;
     };
-}
+} // namespace collections::rstd

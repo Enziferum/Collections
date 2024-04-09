@@ -2,7 +2,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace concurrency {
+namespace collections::concurrency {
 
     class TaskCount {
     public:
@@ -38,4 +38,4 @@ namespace concurrency {
         mutex m_mutex;
         condition_variable m_idle;
     };
-}
+} // namespace collections::concurrency

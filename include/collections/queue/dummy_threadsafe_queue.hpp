@@ -4,7 +4,7 @@
 #include <memory>
 #include <mutex>
 
-namespace concurrency {
+namespace collections::concurrency {
 
     /// \brief Dummy Realization ThreadSafe Queue based on mutex and std::queue
     template<typename T>
@@ -71,4 +71,4 @@ namespace concurrency {
         std::queue<T> m_queue;
         std::mutex m_queueMutex;
     };
-}
+} // namespace collections::concurrency

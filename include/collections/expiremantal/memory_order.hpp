@@ -1,6 +1,6 @@
 #pragma once
 
-namespace rstd {
+namespace collections::rstd {
     enum class memory_order {
         seq,
         acquire,

@@ -15,7 +15,7 @@
 #include "iexecutor.hpp"
 #include "result.hpp"
 
-namespace concurrency {
+namespace collections::concurrency {
 
     enum class future_error_type {
 
@@ -618,7 +618,7 @@ namespace concurrency {
         return f;
     }
 
-} // namespace concurrency
+} // namespace collections::concurrency
 
 /// \brief Idea that future can't be using somewhere else, because we work with subscribe / then but not get() method directly.
 #define MARK_UNUSABLE(f) std::move(f);

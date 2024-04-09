@@ -11,7 +11,7 @@
 #include "future.hpp"
 #include "task_count.hpp"
 
-namespace concurrency {
+namespace collections::concurrency {
 
     class thread_pool: public iexecutor {
     public:
@@ -55,4 +55,4 @@ namespace concurrency {
         return async(*this, std::move(task), std::forward<Args>(args)...);
     }
 
-} // namespace concurrency
+} // namespace collections::concurrency

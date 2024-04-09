@@ -4,7 +4,7 @@
     #include <atomic>
 #endif
 
-namespace rstd {
+namespace collections::rstd {
     /// TTAS ( test && test&set) model
     class spinlock {
     public:
@@ -82,4 +82,4 @@ namespace rstd {
     private:
         T m_lock;
     };
-}
+} // namespace collections::rstd

@@ -1,9 +1,9 @@
 #pragma once
 #include <collections/rstl/unique_function.hpp>
 
-namespace concurrency {
+namespace collections::concurrency {
 
-    using Task = rstl::unique_function<void()>;
+    using Task = rstd::unique_function<void()>;
 
     class iexecutor {
     public:
@@ -11,4 +11,4 @@ namespace concurrency {
 
         virtual void execute(Task task) = 0;
     };
-}
+} // namespace collections::rstd

@@ -3,7 +3,7 @@
 #include <type_traits>
 #include <stdexcept>
 
-namespace rstl {
+namespace collections::rstd {
 
     struct unique_function_bad_callable: std::logic_error {
         explicit unique_function_bad_callable(const std::string& message): std::logic_error(message){}

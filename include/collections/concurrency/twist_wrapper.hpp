@@ -12,7 +12,7 @@
     #include <thread>
 #endif
 
-namespace concurrency {
+namespace collections::concurrency {
 
 #ifdef USE_TWIST
     using mutex = twist::ed::stdlike::mutex;
@@ -29,4 +29,4 @@ namespace concurrency {
     using thread = std::thread;
 #endif
 
-}
+} // namespace collections::concurrency

@@ -3,7 +3,7 @@
 
 #include "error.hpp"
 
-namespace concurrency {
+namespace collections::concurrency {
     namespace detail {
         template<typename T>
         class ValueStorage {
@@ -204,4 +204,4 @@ namespace concurrency {
         using type = void;
     };
 
-} // namespace concurrency
+} // namespace collections::concurrency
