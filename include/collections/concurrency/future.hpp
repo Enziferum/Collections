@@ -11,7 +11,7 @@
 #include <system_error>
 #include <type_traits>
 
-#include "collections/rstl/unique_function.hpp"
+#include "collections/rstd/unique_function.hpp"
 #include "iexecutor.hpp"
 #include "result.hpp"
 
@@ -534,7 +534,7 @@ namespace collections::concurrency {
             m_task(std::forward<Args>(args)...);
         }
     private:
-        rstl::unique_function<void(Args...)> m_task;
+        rstd::unique_function<void(Args...)> m_task;
         future<R> m_future;
         bool m_promise_satisfied{false};
     };
@@ -593,7 +593,7 @@ namespace collections::concurrency {
             m_task(std::forward<Args>(args)...);
         }
     private:
-        rstl::unique_function<void(Args...)> m_task;
+        rstd::unique_function<void(Args...)> m_task;
         future<void> m_future;
         bool m_promise_satisfied{false};
     };

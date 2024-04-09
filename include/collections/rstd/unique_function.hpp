@@ -166,7 +166,7 @@ namespace collections::rstd {
 
 namespace std {
     template<typename Signature>
-    inline void swap(rstl::unique_function<Signature>& left, rstl::unique_function<Signature>& right) {
+    inline void swap(collections::rstd::unique_function<Signature>& left, collections::rstd::unique_function<Signature>& right) {
         left.swap(right);
     }
 }

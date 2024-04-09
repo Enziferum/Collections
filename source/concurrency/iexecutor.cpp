@@ -1,5 +1,5 @@
 #include <collections/concurrency/iexecutor.hpp>
 
-namespace concurrency {
-    iexecutor::~iexecutor() {}
-} // namespace concurrency
+namespace collections::concurrency {
+    iexecutor::~iexecutor() = default;
+} // namespace collections::concurrency

@@ -1,5 +1,6 @@
 add_subdirectory(concurrency)
-add_subdirectory(rstl)
+add_subdirectory(rstd)
+add_subdirectory(queues)
 
 cmake_policy(SET CMP0135 NEW)
 

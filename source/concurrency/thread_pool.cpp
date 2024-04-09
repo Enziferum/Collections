@@ -1,7 +1,7 @@
 #include <collections/concurrency/thread_pool.hpp>
 #include <iostream>
 
-namespace concurrency {
+namespace collections::concurrency {
 
     thread_local unsigned thread_pool::m_threadIndex = 0;
     thread_local thread_pool::TaskStealingQueue* thread_pool::m_localQueue = nullptr;
@@ -93,4 +93,4 @@ namespace concurrency {
     }
 
 
-} // namespace concurrency
+} // namespace collections::concurrency
