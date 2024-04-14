@@ -3,9 +3,15 @@
 #ifndef USE_RSTD_ATOMIC
     #include <atomic>
 #endif
+#if defined(_MSC_VER)
+#    include <intrin.h> // _mm_pause()
+#elif !defined(__arm__) && !defined(__aarch64__)
+#    include <immintrin.h> // _mm_pause()
+#endif
 
 namespace collections::rstd {
-    /// TTAS ( test && test&set) model
+    /// \brief TTAS ( test && test&set) model
+    /// \brief inside futures +25-40% speed vs std::mutex
     class spinlock {
     public:
         spinlock() = default;
@@ -21,17 +27,24 @@ namespace collections::rstd {
                 if(!m_lock.exchange(true, memory_order::acquire))
                     return;
                 while(m_lock.load(memory_order::relaxed)) {
-                    __builtin_ia32_pause();
+#if defined(__arm__) || defined(__aarch64__) // arm
+                    __asm__ __volatile__("yield");
+#else
+                    /// __asm__ volatile ("pause" ::: "memory"); /// SSE2 support need for CPU
+                    _mm_pause();
+#endif
                 }
 #else
                 if(!m_lock.exchange(true, std::memory_order::memory_order_acquire))
                     return;
                 while(m_lock.load(std::memory_order::memory_order_relaxed)) {
-                    /// TODO(a.raag): pause on different platforms
-#if __has_feature(__builtin_cpu_is)
-                    if(__builtin_cpu_is("intel"))
-                        __builtin_ia32_pause();
+#if defined(__arm__) || defined(__aarch64__) // arm
+                    __asm__ __volatile__("yield");
+#else
+                    /// __asm__ volatile ("pause" ::: "memory"); /// SSE2 support need for CPU
+                    _mm_pause();
 #endif
+
                 }
 #endif
             }
@@ -67,7 +80,7 @@ namespace collections::rstd {
     template<typename T>
     class spinguard {
     public:
-        explicit spinguard(const T& lock) noexcept: m_lock{ lock } {
+        explicit spinguard(T& lock) noexcept: m_lock{ lock } {
             m_lock.lock();
         }
 
@@ -80,6 +93,6 @@ namespace collections::rstd {
         spinguard(spinguard&& other) = delete;
         spinguard& operator=(spinguard&& other) = delete;
     private:
-        T m_lock;
+        T& m_lock;
     };
 } // namespace collections::rstd

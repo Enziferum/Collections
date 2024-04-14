@@ -11,15 +11,13 @@
 #include <system_error>
 #include <type_traits>
 
+#include <collections/expiremantal/spinlock.hpp>
 #include "collections/rstd/unique_function.hpp"
 #include "iexecutor.hpp"
 #include "result.hpp"
 
 namespace collections::concurrency {
-
-    enum class future_error_type {
-
-    };
+    enum class future_error_type {};
 
     class future_error: public std::logic_error {
     public:
@@ -52,10 +50,13 @@ namespace collections::concurrency {
         std::exception_ptr exceptionPtr;
 
         std::mutex mutex;
+        rstd::spinlock spinlock;
+
         std::atomic_bool ready;
         std::condition_variable m_cond;
         std::list<Task> m_continuations;
         std::shared_ptr<Task> m_subscription;
+        iexecutor* currentExecutor { nullptr };
     };
 
     template<>
@@ -122,54 +123,86 @@ namespace collections::concurrency {
            return Result<R>::Ok(std::move(state -> value));
         }
 
+        future<R>&& via(iexecutor* iexecutor) {
+            this -> m_state -> currentExecutor = iexecutor;
+            return std::move(*this);
+        }
+
         template<typename Func>
-        auto subscribe(iexecutor& executor, Func&& func) -> future<decltype(func(std::declval<Result<R>>()))> {
+        auto subscribe(Func&& func) && -> future<decltype(func(std::declval<Result<R>>()))> {
             if(!this -> m_state)
                 throw std::runtime_error("concurrency::future: state is nullptr");
             auto state = this -> m_state;
+
             using R2 = decltype(func(std::declval<Result<R>>()));
-            packaged_task<R2()> task(executor, [func = std::forward<Func>(func), fut = std::move(*this)]() mutable {
+            packaged_task<R2()> task(*state -> currentExecutor, [func = std::forward<Func>(func), fut = std::move(*this)]() mutable {
                 return func(std::move(fut.nowait_get()));
             });
 
             future<R2> f = task.get_future();
-            {
-                std::lock_guard<std::mutex> lockGuard{state -> mutex};
-                if(state -> ready) {
-                    executor.execute(std::move(task));
-                }
-                else {
-                    state -> m_subscription = std::make_shared<Task>(std::move(task));
-                }
+
+            rstd::spinguard<rstd::spinlock> lockGuard(state -> spinlock);
+            if(state -> ready.load(std::memory_order::memory_order_acquire)) {
+                if(state -> currentExecutor)
+                    state -> currentExecutor -> execute(std::move(task));
             }
+            else {
+                state -> m_subscription = std::make_shared<Task>(std::move(task));
+            }
+
+
 
             return f;
         }
 
         template<typename Func>
-        auto then(iexecutor& executor, Func&& func)  {
+        auto then(iexecutor& executor, Func&& func) &&  {
             if(!this -> m_state)
                 throw std::runtime_error("concurrency::future: state is nullptr");
             auto state = this -> m_state;
 
             using R2 = decltype(func(std::declval<Result<R>>()));
-            packaged_task<R2()> task(executor,
-                                     [func = std::forward<Func>(func), fut = std::move(*this)]() mutable {
+            packaged_task<R2()> task(executor, [func = std::forward<Func>(func), fut = std::move(*this)]() mutable {
                 return func(fut.nowait_get());
             });
 
             future<R2> f = task.get_future();
 
-           // {
-                std::lock_guard<std::mutex> lockGuard(state -> mutex);
-                if (state -> ready) {
-                    executor.execute(std::move(task));
-                } else {
-                    state -> m_continuations.emplace_back(std::move(task));
-                }
-            //}
+            rstd::spinguard<rstd::spinlock> lockGuard(state -> spinlock);
+            if (state -> ready.load(std::memory_order::memory_order_acquire)) {
+                executor.execute(std::move(task));
+            } else {
+                state -> m_continuations.emplace_back(std::move(task));
+            }
+
+
+           return f;
+        }
+
+        template<typename Func>
+        auto then(Func&& func) &&  {
+            if(!this -> m_state)
+                throw std::runtime_error("concurrency::future: state is nullptr");
+            auto state = this -> m_state;
+
+            using R2 = decltype(func(std::declval<Result<R>>()));
+            packaged_task<R2()> task(*state -> currentExecutor, [func = std::forward<Func>(func), fut = std::move(*this)]() mutable {
+                return func(fut.nowait_get());
+            });
+
+            future<R2> f = task.get_future();
+
+            rstd::spinguard<rstd::spinlock> lockGuard(state -> spinlock);
+            if (state -> ready.load(std::memory_order::memory_order_acquire)) {
+                state -> currentExecutor -> execute(std::move(task));
+            } else {
+                state -> m_continuations.emplace_back(std::move(task));
+            }
+
+
             return f;
         }
+
 
         template<typename Func>
         auto next(iexecutor& executor, Func&& func) {
@@ -179,16 +212,17 @@ namespace collections::concurrency {
         }
 
         template<typename Func>
-        future<R> recover(iexecutor& executor, Func&& func) {
-            return this -> then(executor,
+        future<R> recover(iexecutor& executor, Func&& func) && {
+            auto f = std::move(*this).then(executor,
                     [func = std::forward<Func>(func)](Result<R>&& exceptionResult) {
                         try {
                            return exceptionResult.ValueOrThrow();
                         } catch (...) {
-                            return func(std::move(Result<R>::Fail(std::current_exception())));
+                            return func(std::move(Error(std::current_exception())));
                         }
                     }
             );
+            return f;
         }
 
         future<R> fallback_to(R fallback) {
@@ -246,7 +280,7 @@ namespace collections::concurrency {
         void wait() const {
             if (m_state == nullptr) throw "no_state";
             std::unique_lock<std::mutex> lock(m_state->mutex);
-            while (!m_state->ready) {
+            while (!m_state -> ready) {
                 m_state -> m_cond.wait(lock);
             }
         }
@@ -374,20 +408,25 @@ namespace collections::concurrency {
     private:
         promise(iexecutor* executor):
             m_state(std::make_shared<shared_state<R>>()),
-            m_executor(executor) {}
+            m_executor(executor) {
+            m_state -> currentExecutor = executor;
+        }
     private:
         void set_ready() {
             {
-                std::lock_guard<std::mutex> lockGuard{m_state->mutex};
-                m_state -> ready = true;
-                /// TODO: if has continuations -> chain else if has finish / subscribe -> call directly
+                rstd::spinguard<rstd::spinlock> lockGuard(m_state -> spinlock);
+                m_state -> ready.store(true, std::memory_order::memory_order_release);
+
                 if(!(m_state -> m_continuations.empty())) {
                     for(auto& task: m_state -> m_continuations) {
                         m_executor -> execute(std::move(task));
                     }
                 }
                 else if(m_state -> m_subscription) {
-                    m_state -> m_subscription -> operator()();
+                    if(m_state -> currentExecutor)
+                        m_state -> currentExecutor -> execute(std::move(*m_state -> m_subscription));
+                    else
+                        m_executor -> execute(std::move(*m_state -> m_subscription));
                 }
 
                 m_state -> m_cond.notify_one();
@@ -615,7 +654,7 @@ namespace collections::concurrency {
         auto bound = std::bind(wrapper, std::move(task), std::forward<Args>(args)...);
         executor.execute(std::move(bound));
 
-        return f;
+        return std::move(f);
     }
 
 } // namespace collections::concurrency

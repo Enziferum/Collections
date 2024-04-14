@@ -19,6 +19,7 @@ add_library(${PROJECT_NAME} ${INCL} ${SRC})
 target_include_directories(${PROJECT_NAME} PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
 
+set(USE_TSAN ON)
 if (USE_TSAN)
 
     message(STATUS "Sanitize with Thread Sanitizer (TSAN)")
