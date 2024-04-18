@@ -4,9 +4,11 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <iostream>
+#include <numeric>
 
 namespace util {
-    using benchmarkCallback = std::function<void()>;
+    using benchmarkCallback = std::function<void(int)>;
 
     enum class benchmark_throw_type {
         no_callback
@@ -50,6 +52,7 @@ namespace util {
         };
 
         friend Time operator+(const Time& left, const Time& right);
+        friend bool operator<(const Time& left, const Time& right);
         friend std::ostream& operator << (std::ostream& os, const Time& time);
 
         std::int64_t count;
@@ -58,7 +61,9 @@ namespace util {
 
     struct BenchmarkResult {
         Time time;
+        std::string name;
         friend BenchmarkResult operator+(const BenchmarkResult& left, const BenchmarkResult& right);
+        friend bool operator<(const BenchmarkResult& left, const BenchmarkResult& right);
     };
 
     class Benchmark {
@@ -67,15 +72,17 @@ namespace util {
             m_message(std::move(message)), m_callback(std::move(callback)) {}
         ~Benchmark() = default;
 
-        void operator()() {
+        template<typename ... Args>
+        void operator()(Args&& ...args) {
             if(!m_callback)
                 throw BenchmarkException(benchmark_throw_type::no_callback);
             auto start = std::chrono::high_resolution_clock::now();
-            m_callback();
+            m_callback(std::forward<Args>(args)...);
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = end - start;
             std::int64_t count = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
             m_result.time = Time(count);
+            m_result.name = m_message;
         }
 
         [[nodiscard]]
@@ -104,7 +111,23 @@ namespace util {
         void do_benchmark(Benchmark&& benchmark);
 
         /// \brief n shot benchmark, save as result's time count median value
-        void do_benchmark(Benchmark&& benchmark, unsigned int tryCount);
+        const BenchmarkResult& do_benchmark(Benchmark&& benchmark, unsigned int tryCount);
+
+        template<typename ... Args>
+        const BenchmarkResult& do_benchmark(Benchmark&& benchmark, unsigned int tryCount, Args&& ... args) {
+            std::vector<BenchmarkResult> tmpResult{tryCount};
+            std::cout << "Start " << benchmark.m_message << ". Repeat " << tryCount << " times" << "\n";
+
+            for(int i = 0; i < tryCount; ++i) {
+                benchmark(std::forward<Args>(args)...);
+                tmpResult[i] = benchmark.getResult();
+            }
+            std::cout << "Stop" << benchmark.m_message << "\n";
+            auto result = std::reduce(tmpResult.begin(), tmpResult.end());
+            result.time.count /= static_cast<int>(tryCount);
+            result.name = tmpResult[0].name;
+            return m_benchmark_results.emplace_back(result);
+        }
 
 
         const BenchmarkResult& operator[](std::size_t index) {

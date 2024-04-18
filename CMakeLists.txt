@@ -7,8 +7,7 @@ endif()
 
 option(BUILD_TESTS "Build Tests?" ON)
 option(BUILD_SANDBOX "Build Sandbox?" ON)
-
-option(BUILD_BENCHMARK "Build Benchmark?" OFF)
+option(USE_TTSAN "Use Sanitizers" OFF)
 option(USE_TWIST "Use Twist library?" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -39,10 +38,6 @@ target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 if(BUILD_TESTS)
     add_subdirectory(tests)
-endif()
-
-if(BUILD_BENCHMARK)
-    add_subdirectory(benchmark)
 endif()
 
 if(BUILD_SANDBOX)

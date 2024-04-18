@@ -67,6 +67,8 @@ namespace collections::concurrency {
             std::lock_guard<std::mutex> lock(m_queueMutex);
             return m_queue.empty();
         }
+
+        void clear() { while(!m_queue.empty()) m_queue.pop();}
     private:
         std::queue<T> m_queue;
         std::mutex m_queueMutex;

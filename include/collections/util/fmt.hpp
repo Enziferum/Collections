@@ -114,6 +114,7 @@ namespace collections::util {
         result.reserve(message.size());
         bool needAdd = true;
 
+        /// TODO(a.raag): if incorrect message format no throw
         for(; i < message.size(); ++i) {
             if(message[i] == '{') {
                 startIndex = i;
@@ -125,12 +126,15 @@ namespace collections::util {
                 const auto& substr = strings[currentIndex];
 
                 result += substr;
-                // TODO(a.raag): fix bug {n}{n'} nearby
-                if(message[stopIndex + 1] != '{' && i + 1 < message.size())
+                bool nextIsBraket = (message[stopIndex + 1] == '{');
+
+                if(!nextIsBraket && i + 1 < message.size())
                     i = stopIndex + 1;
                 else
                     i = stopIndex;
-                needAdd = true;
+
+                if(!nextIsBraket && (i + 1) < message.size())
+                    needAdd = true;
             }
             if(needAdd)
                 result += message[i];
