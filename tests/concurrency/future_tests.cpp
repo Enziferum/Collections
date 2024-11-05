@@ -8,8 +8,8 @@ namespace {
         int a{0};
     };
 
-    struct TestExecutor: concurrency::iexecutor {
-        void execute(concurrency::Task task) override {
+    struct TestExecutor: collections::concurrency::iexecutor {
+        void execute(collections::concurrency::Task task) override {
             // no-op //
         }
     };

@@ -34,8 +34,8 @@ namespace  {
     };
 }
 
-TEST(Rstl, unique_function_void_return_test) {
-    rstl::unique_function<void()> f = []() {
+TEST(rstd, unique_function_void_return_test) {
+    collections::rstd::unique_function<void()> f = []() {
         int a = 2;
         ++a;
         EXPECT_EQ(a, 3);
@@ -44,8 +44,8 @@ TEST(Rstl, unique_function_void_return_test) {
     f();
 }
 
-TEST(Rstl, unique_function_value_return_test) {
-    rstl::unique_function<int()> f = []() -> int {
+TEST(rstd, unique_function_value_return_test) {
+    collections::rstd::unique_function<int()> f = []() -> int {
         int a = 42;
         ++a;
         return a;
@@ -54,23 +54,23 @@ TEST(Rstl, unique_function_value_return_test) {
     EXPECT_EQ(f(), 43);
 }
 
-TEST(Rstl, unique_function_void_return_input_value_test) {
-    rstl::unique_function<void(int)> f = [](int a){
+TEST(rstd, unique_function_void_return_input_value_test) {
+    collections::rstd::unique_function<void(int)> f = [](int a){
         ++a;
         EXPECT_EQ(a, 43);
     };
 }
 
-TEST(Rstl, unique_function_value_return_input_value_test) {
-    rstl::unique_function<int(int)> f = [](int a) {
+TEST(rstd, unique_function_value_return_input_value_test) {
+    collections::rstd::unique_function<int(int)> f = [](int a) {
         ++a;
         return a;
     };
     EXPECT_EQ(f(42), 43);
 }
 
-TEST(Rstl, move_unique_function_void_return_input_value_test) {
-    rstl::unique_function<void(int)> f = [](int a) {
+TEST(rstd, move_unique_function_void_return_input_value_test) {
+    collections::rstd::unique_function<void(int)> f = [](int a) {
         ++a;
         EXPECT_EQ(a, 43);
     };
@@ -79,8 +79,8 @@ TEST(Rstl, move_unique_function_void_return_input_value_test) {
     f1(42);
 }
 
-TEST(Rstl, move_unique_function_value_return_input_value_test) {
-    rstl::unique_function<int(int)> f = [](int a) {
+TEST(rstd, move_unique_function_value_return_input_value_test) {
+    collections::rstd::unique_function<int(int)> f = [](int a) {
         ++a;
         return a;
     };
@@ -89,12 +89,12 @@ TEST(Rstl, move_unique_function_value_return_input_value_test) {
     EXPECT_EQ(f1(42), 43);
 }
 
-TEST(Rstl, unique_function_value_return_input_value_custom_type_test) {
+TEST(rstd, unique_function_value_return_input_value_custom_type_test) {
     struct A {
         int a;
     };
 
-    rstl::unique_function<int(A)> f = [](A a) {
+    collections::rstd::unique_function<int(A)> f = [](A a) {
         ++a.a;
         return a.a;
     };
@@ -103,14 +103,14 @@ TEST(Rstl, unique_function_value_return_input_value_custom_type_test) {
     EXPECT_EQ(f(std::move(test_a)), 43);
 }
 
-TEST(Rstl, move_unique_function_value_return_input_value_custom_type_non_pod_type_test) {
+TEST(rstd, move_unique_function_value_return_input_value_custom_type_non_pod_type_test) {
     struct A {
         explicit A(int a): a{a}{}
         int a;
         virtual void f() {}
     };
 
-    rstl::unique_function<int(A)> f = [](A a) {
+    collections::rstd::unique_function<int(A)> f = [](A a) {
         ++a.a;
         return a.a;
     };
@@ -120,40 +120,40 @@ TEST(Rstl, move_unique_function_value_return_input_value_custom_type_non_pod_typ
     EXPECT_EQ(f1(std::move(test_a)), 43);
 }
 
-TEST(Rstl, unique_function_value_return_input_value_custom_type_standard_function_test) {
-    rstl::unique_function<int(TestA)> f = &sum_func;
+TEST(rstd, unique_function_value_return_input_value_custom_type_standard_function_test) {
+    collections::rstd::unique_function<int(TestA)> f = &sum_func;
 
     TestA test_a{42};
     EXPECT_EQ(f(std::move(test_a)), 43);
 }
 
-TEST(Rstl, move_unique_function_value_return_input_value_custom_type_standard_function_test) {
-    rstl::unique_function<int(TestA)> f = &sum_func;
+TEST(rstd, move_unique_function_value_return_input_value_custom_type_standard_function_test) {
+    collections::rstd::unique_function<int(TestA)> f = &sum_func;
 
     TestA test_a{42};
     auto f1 = std::move(f);
     EXPECT_EQ(f1(std::move(test_a)), 43);
 }
 
-TEST(Rstl, unique_function_value_return_input_value_custom_type_functor_test) {
-    rstl::unique_function<int(TestA)> f = TestAFunctor();
+TEST(rstd, unique_function_value_return_input_value_custom_type_functor_test) {
+    collections::rstd::unique_function<int(TestA)> f = TestAFunctor();
 
     TestA test_a{42};
     EXPECT_EQ(f(std::move(test_a)), 43);
 }
 
-TEST(Rstl, move_unique_function_value_return_input_value_custom_type_functor_test) {
-    rstl::unique_function<int(TestA)> f = TestAFunctor();
+TEST(rstd, move_unique_function_value_return_input_value_custom_type_functor_test) {
+    collections::rstd::unique_function<int(TestA)> f = TestAFunctor();
 
     TestA test_a{42};
     auto f1 = std::move(f);
     EXPECT_EQ(f1(std::move(test_a)), 43);
 }
 
-TEST(Rstl, unique_function_capture_move_only_test) {
+TEST(rstd, unique_function_capture_move_only_test) {
     std::unique_ptr<int> u_ptr = std::make_unique<int>(42);
 
-    rstl::unique_function<void()> f = [u_ptr = std::move(u_ptr)]() {
+    collections::rstd::unique_function<void()> f = [u_ptr = std::move(u_ptr)]() {
         (*u_ptr)++;
         EXPECT_EQ(*u_ptr, 43);
     };
@@ -161,10 +161,10 @@ TEST(Rstl, unique_function_capture_move_only_test) {
     f();
 }
 
-TEST(Rstl, move_unique_function_capture_move_only_test) {
+TEST(rstd, move_unique_function_capture_move_only_test) {
     std::unique_ptr<int> u_ptr = std::make_unique<int>(42);
 
-    rstl::unique_function<void()> f = [u_ptr = std::move(u_ptr)]() {
+    collections::rstd::unique_function<void()> f = [u_ptr = std::move(u_ptr)]() {
         (*u_ptr)++;
         EXPECT_EQ(*u_ptr, 43);
     };
@@ -173,9 +173,9 @@ TEST(Rstl, move_unique_function_capture_move_only_test) {
     f1();
 }
 
-TEST(Rstl, unique_function_throw_no_callbable_test) {
-    rstl::unique_function<void()> f;
+TEST(rstd, unique_function_throw_no_callbable_test) {
+    collections::rstd::unique_function<void()> f;
     EXPECT_THAT([&f]() { f(); },
-                testing::ThrowsMessage<rstl::unique_function_bad_callable>(
+                testing::ThrowsMessage<collections::rstd::unique_function_bad_callable>(
                         testing::HasSubstr("rstd::unique_function, create callable before invoke")));
 }
