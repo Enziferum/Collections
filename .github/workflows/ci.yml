@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Configure
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON -DBUILD_SANDBOX=OFF
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j 2
@@ -37,12 +37,6 @@ jobs:
           reporter: java-junit        # Format of test results
         continue-on-error: true
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: linux-assets
-          path: ${{github.workspace}}/linter
-
   build-windows:
     runs-on: windows-latest
 
@@ -51,7 +45,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Configure
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON -DBUILD_SANDBOX=OFF
         shell: cmd
 
       - name: Build
@@ -71,9 +65,3 @@ jobs:
           path: build/tests/*.xml    # Path to test results
           reporter: java-junit        # Format of test results
         continue-on-error: true
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: windows-assets
-          path: ${{github.workspace}}/linter

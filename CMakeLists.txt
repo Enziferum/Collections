@@ -5,16 +5,25 @@ if(MSVC)
     add_definitions(/MP)
 endif()
 
-option(BUILD_TESTS "Build Tests?" ON)
-option(BUILD_SANDBOX "Build Sandbox?" ON)
-option(USE_TTSAN "Use Sanitizers" OFF)
-option(USE_TWIST "Use Twist library?" OFF)
 
-set(CMAKE_CXX_STANDARD 17)
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+    message(FATAL_ERROR "In-source builds not allowed.
+    Please make a new directory (called a build directory)
+	and run CMake from there. You may need to remove CMakeCache.txt.")
+endif()
+
+cmake_policy(SET CMP0074 NEW)
+
+if(RB2D_USE_CMAKE_VERBOSE)
+    set(CMAKE_VERBOSE_MAKEFILE ON)
+endif ()
+
+include(cmake/Base.cmake)
+
 file(GLOB_RECURSE INCL include/*.hpp)
 file(GLOB_RECURSE SRC source/*.cpp)
 
-add_library(${PROJECT_NAME} ${INCL} ${SRC})
+add_library(${PROJECT_NAME} STATIC ${INCL} ${SRC})
 target_include_directories(${PROJECT_NAME} PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
 
