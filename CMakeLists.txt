@@ -18,6 +18,8 @@ if(RB2D_USE_CMAKE_VERBOSE)
     set(CMAKE_VERBOSE_MAKEFILE ON)
 endif ()
 
+set(CMAKE_CXX_STANDARD 20)
+
 include(cmake/Base.cmake)
 
 file(GLOB_RECURSE INCL include/*.hpp)
