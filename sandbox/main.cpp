@@ -1,15 +1,17 @@
+#include <iostream>
+#include <cassert>
+#include <memory.h> // memset
+#include <climits>
+#include <complex>
+
 #include <collections/concurrency/thread_pool.hpp>
 #include <collections/concurrency/future.hpp>
 #include <collections/queue/lockfree_queue.hpp>
 #include <collections/util/fmt.hpp>
 
 #include "benchmark.hpp"
+#include "blocking_threadsafe_queue.hpp"
 
-#include <iostream>
-#include <cassert>
-#include <memory.h> // memset
-#include <climits>
-#include <complex>
 
 using namespace std::chrono_literals;
 
@@ -475,22 +477,45 @@ void stressDispatcher() {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 namespace {
     collections::concurrency::dummy_threadsafe_queue<int> g_dummyQueue;
     collections::concurrency::blocking_threadsafe_queue<int> g_Queue;
 
 
-    constexpr int opsValue = 10000; // 200 400 800 1600
+    constexpr int opsValue = 10001; // 200 400 800 1600
     constexpr int threadPairValue = 2;
     std::atomic_int g_popDummy{ 0 };
     std::atomic_int g_DummyCntr{ 0 };
     std::atomic_int g_popQueue{ 0 };
     std::atomic_int g_QueueCntr{ 0 };
 
+    std::atomic_int g_dummySum{ 0 };
+    std::atomic_int g_QueueSum{ 0 };
+
+    std::mutex g_DummyMutex;
+    std::mutex g_QueueMutex;
+    constexpr int expectedSum = 50005000;
 }
 
 void dummy_writer() {
-    for(int i = 0; i < opsValue; ++i) {
+    for(int i = 1; i < opsValue; ++i) {
         int a = i;
         g_dummyQueue.push(std::move(a));
     }
@@ -499,9 +524,12 @@ void dummy_writer() {
 
 
 void dummy_reader() {
-    while(g_popDummy.load() < opsValue) {
+    /// 50005000
+    while(g_dummySum.load() < 50004990) {
         if(auto task = g_dummyQueue.try_pop()) {
+            std::lock_guard lock{g_DummyMutex};
             g_popDummy.fetch_add(1);
+            g_dummySum.fetch_add(*task);
         }
     }
 }
@@ -510,9 +538,9 @@ void dummy_reader() {
 void dummy_benchmark(int threadPairVal) {
     std::vector<std::thread> writerThreads;
     std::vector<std::thread> readerThreads;
-    for(int i = 0; i < threadPairVal; ++i)
+    for(int i = 0; i < 1; ++i)
         writerThreads.emplace_back(dummy_writer);
-    for(int i = 0; i < threadPairVal * 2; ++i)
+    for(int i = 0; i < threadPairVal; ++i)
         readerThreads.emplace_back(dummy_reader);
 
     for(auto& writer: writerThreads)
@@ -521,31 +549,37 @@ void dummy_benchmark(int threadPairVal) {
     for(auto& reader: readerThreads)
         reader.join();
 
+    std::cout << "Dummy Sum: " << g_dummySum << std::endl;
+    g_dummySum = 0;
     g_popDummy = 0;
     g_dummyQueue.clear();
 }
 
 void queue_writer() {
-    for(int i = 0; i < opsValue + 1; ++i) {
+    for(int i = 1; i < opsValue + 1; ++i) {
         int a = i;
         g_Queue.push(std::move(a));
     }
 }
 
 void queue_reader() {
-    while(g_popQueue.load() < opsValue) {
+    while(g_QueueSum.load() < 50004990) {
         if(auto val = g_Queue.try_pop()) {
+            std::lock_guard lock{g_QueueMutex};
             g_popQueue.fetch_add(1);
+            g_QueueSum.fetch_add(*val);
         }
     }
 }
 
+
+
 void queue_benchmark(int threadPairVal) {
     std::vector<std::thread> writerThreads;
     std::vector<std::thread> readerThreads;
-    for(int i = 0; i < threadPairVal; ++i)
+    for(int i = 0; i < 1; ++i)
         writerThreads.emplace_back(queue_writer);
-    for(int i = 0; i < threadPairVal * 2; ++i)
+    for(int i = 0; i < threadPairVal; ++i)
         readerThreads.emplace_back(queue_reader);
 
     for(auto& writer: writerThreads)
@@ -554,6 +588,8 @@ void queue_benchmark(int threadPairVal) {
     for(auto& reader: readerThreads)
         reader.join();
 
+    std::cout << "Queue Sum: " << g_QueueSum << std::endl;
+    g_QueueSum = 0;
     g_popQueue = 0;
     g_Queue.clear();
 }
@@ -571,7 +607,7 @@ void dispatcherTest() {
 
 void queue_benchmarks() {
     const int try_count = 10;
-    std::array<int, 2> threadCount = { 1, 2 };
+    std::array<int, 3> threadCount = { 1, 2, 4 };
     //std::array<int, 1> threadCount = { 1 };
 
     for(auto& i: threadCount) {
@@ -596,7 +632,7 @@ void queue_benchmarks() {
 
 }
 
-void queue_bench() {
+/*void queue_bench() {
     util::BenchmarkManager benchmarkManager;
 
 
@@ -957,11 +993,9 @@ template<typename Func, typename TupleT, std::size_t TupleSize = std::tuple_size
 void rfor_each(Func&& func, TupleT&& tuple) {
     for_each_helper(std::forward<Func>(func), std::forward<TupleT>(tuple),
                     make_index_reverse_sequence<TupleSize>());
-}
+}*/
 
 int main () {
-//    queue_benchmarks();
-    MyQueueAllocator<MyClass> allocator{};
-    queue_example(allocator);
+    queue_benchmarks();
     return 0;
 }

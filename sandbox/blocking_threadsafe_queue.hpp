@@ -3,7 +3,7 @@
 #include <mutex>
 #include <thread>
 
-#include "collections/rstd/spinlock.hpp"
+#include <collections/expiremantal/spinlock.hpp>
 
 
 namespace collections::concurrency {
@@ -267,13 +267,13 @@ namespace collections::concurrency {
                 return m_nodeBuffer + m_len;
             else {
                 m_tailMutex.unlock();
-                relacateBuffer();
+                relocateBuffer();
                 m_tailMutex.lock();
                 return m_nodeBuffer + m_len;
             }
         }
 
-        void relacateBuffer() {
+        void relocateBuffer() {
             hierarchy_scoped_lock lock{m_headMutex, m_tailMutex};
             if(m_cap * 2 <= max_size())
                 m_cap *= 2;
@@ -285,6 +285,7 @@ namespace collections::concurrency {
             Node* newFinish = newStart;
             auto len = m_len;
 
+            //////////////////////////// Deep copy ////////////////////////////
             try {
                 Node* newStartIter = newBuffer;
                 NodeIterator oldStart = begin();
