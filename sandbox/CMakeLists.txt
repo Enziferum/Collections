@@ -4,7 +4,7 @@ project(sandbox)
 set(CMAKE_CXX_STANDARD 17)
 set(SRC main.cpp benchmark.cpp)
 
-set(USE_TSAN ON)
+set(USE_TSAN OFF)
 
 
 set(TSAN_COMPILE_FLAGS -fsanitize=thread -fno-sanitize-recover=all)

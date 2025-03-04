@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include <collections/concurrency/future.hpp>
-#include <collections/concurrency/thread_pool.hpp>
+#include <walli/concurrency/future.hpp>
+#include <walli/concurrency/thread_pool.hpp>
 
 using namespace std::chrono_literals;
 
@@ -37,6 +37,7 @@ TEST_F(ConcurrencyTest, test_async_subscribe) {
 
     MARK_UNUSABLE(f)
 }
+
 
 TEST_F(ConcurrencyTest, test_async) {
     auto f = collections::concurrency::async(executor, []() -> int {

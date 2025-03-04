@@ -2,9 +2,9 @@
 #include <vector>
 #include <memory>
 
-#include <collections/queue/dummy_threadsafe_queue.hpp>
-#include <collections/queue/threadsafe_queue.hpp>
-#include <collections/queue/work_stealing_queue.hpp>
+#include <walli/queue/dummy_threadsafe_queue.hpp>
+#include <walli/queue/threadsafe_queue.hpp>
+#include <walli/queue/work_stealing_queue.hpp>
 
 #include "iexecutor.hpp"
 #include "twist_wrapper.hpp"
@@ -38,12 +38,14 @@ namespace collections::concurrency {
         bool pop_task_other_thread(Task& task);
     private:
         std::vector<std::thread> m_threads;
-        using TaskStealingQueue = concurrency::work_stealing_queue<Task>;
-        concurrency::dummy_threadsafe_queue<Task> m_globalQueue;
+        using TaskStealingQueue = work_stealing_queue<Task>;
+        dummy_threadsafe_queue<Task> m_globalQueue;
 
         std::vector<std::unique_ptr<TaskStealingQueue>> m_stealQueues;
         static thread_local TaskStealingQueue* m_localQueue;
         static thread_local unsigned m_threadIndex;
+
+        thread_local unsigned m_tasksDone;
 
         std::atomic_bool m_done { false };
         TaskCount m_taskCount;

@@ -22,7 +22,7 @@ set(TESTS_NAME run_all_tests)
 set(SRC ${RSTL_TESTS_SRC} ${CONCURRENCY_TESTS_SRC} main.cpp)
 
 add_executable(${TESTS_NAME} ${SRC})
-target_link_libraries(${TESTS_NAME} PUBLIC GTest::gtest_main GTest::gmock_main PRIVATE Collections)
+target_link_libraries(${TESTS_NAME} PUBLIC GTest::gtest_main GTest::gmock_main PRIVATE Walli)
 
 include(GoogleTest)
 gtest_discover_tests(${TESTS_NAME})

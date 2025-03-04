@@ -11,8 +11,8 @@
 #include <system_error>
 #include <type_traits>
 
-#include <collections/expiremantal/spinlock.hpp>
-#include "collections/rstd/unique_function.hpp"
+#include <walli/expiremantal/spinlock.hpp>
+#include "walli/rstd/unique_function.hpp"
 #include "iexecutor.hpp"
 #include "result.hpp"
 

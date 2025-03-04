@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(Collections)
+project(Walli)
 
 if(MSVC)
     add_definitions(/MP)
@@ -14,10 +14,6 @@ endif()
 
 cmake_policy(SET CMP0074 NEW)
 
-if(RB2D_USE_CMAKE_VERBOSE)
-    set(CMAKE_VERBOSE_MAKEFILE ON)
-endif ()
-
 set(CMAKE_CXX_STANDARD 17)
 
 include(cmake/Base.cmake)
@@ -29,32 +25,21 @@ add_library(${PROJECT_NAME} STATIC ${INCL} ${SRC})
 target_include_directories(${PROJECT_NAME} PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
 
-set(USE_TSAN OFF)
-if (USE_TSAN)
-
-    message(STATUS "Sanitize with Thread Sanitizer (TSAN)")
-    set(TSAN_COMPILE_FLAGS -fsanitize=thread -fno-sanitize-recover=all)
-    set(TSAN_LINK_FLAGS -fsanitize=thread)
-
-    target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=thread)
-    target_link_options(${PROJECT_NAME}  PRIVATE -fsanitize=thread)
-endif ()
-
 set(LIBS)
-if (USE_TWIST)
+if (WALLI_USE_TWIST)
     set(LIBS twist)
 endif ()
 
 target_link_libraries(${PROJECT_NAME} ${LIBS})
 
-if(BUILD_TESTS)
+if(WALLI_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-if(BUILD_SANDBOX)
+if(WALLI_BUILD_SANDBOX)
     add_subdirectory(sandbox)
 endif()
 
-if(USE_TWIST)
+if(WALLI_USE_TWIST)
     add_subdirectory(extlibs/twist)
 endif()

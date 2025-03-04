@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <execution>
 #include <iostream>
 
 #include "benchmark.hpp"

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <collections/concurrency/future.hpp>
+#include <walli/concurrency/future.hpp>
 
 namespace {
     struct TestA {

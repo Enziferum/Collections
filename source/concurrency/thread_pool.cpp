@@ -1,5 +1,24 @@
-#include <collections/concurrency/thread_pool.hpp>
+#include <walli/concurrency/thread_pool.hpp>
 #include <iostream>
+
+
+
+
+
+
+/*
+ * What we want to do:
+ * Benchmark how much time per thread
+ * how much tasks are done per thread now
+ * in what place mostly tasks are falling
+ * interruption
+*/
+
+
+
+
+
+
 
 namespace collections::concurrency {
 
@@ -54,6 +73,7 @@ namespace collections::concurrency {
     void thread_pool::thread_function(unsigned int threadIndex) {
         m_threadIndex = threadIndex;
         m_localQueue = m_stealQueues[m_threadIndex].get();
+        m_tasksDone = 0;
 
         while(!m_done.load(std::memory_order::memory_order_relaxed))
             run_pending_tasks();
@@ -77,15 +97,14 @@ namespace collections::concurrency {
     }
 
     void thread_pool::run_pending_tasks() {
-        Task currentTask;
-
-        if(
+        if(Task currentTask;
             pop_task_local(currentTask) ||
             pop_task_global(currentTask) ||
             pop_task_other_thread(currentTask)
         ) {
             currentTask();
             m_taskCount.Done();
+            ++m_tasksDone;
         }
         else {
             std::this_thread::yield();
