@@ -2,7 +2,7 @@
 #include <type_traits>
 #include <memory>
 
-namespace collections::rstd {
+namespace walli::rstd {
     namespace priv {
         class mutex_impl;
     }
@@ -37,4 +37,4 @@ namespace collections::rstd {
     private:
         const T& m_mutex;
     };
-} // namespace collections::rstd
+} // namespace walli::rstd

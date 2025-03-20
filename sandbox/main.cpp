@@ -144,9 +144,9 @@ namespace robot2D {
     template<typename T>
     class MainCallable {
     private:
-        using Result = collections::concurrency::Result<T>;
+        using Result = walli::concurrency::Result<T>;
     public:
-        explicit MainCallable(collections::concurrency::future<T>&& f): m_future(std::move(f)) {}
+        explicit MainCallable(walli::concurrency::future<T>&& f): m_future(std::move(f)) {}
         MainCallable() = delete;
         MainCallable(const MainCallable& other) = delete;
         MainCallable& operator=(const MainCallable& other) = delete;
@@ -173,8 +173,8 @@ namespace robot2D {
             m_failureCallback = std::forward<Func>(func);
         }
     private:
-        collections::concurrency::future<T> m_future;
-        collections::rstd::unique_function<void(const std::exception&)> m_failureCallback{};
+        walli::concurrency::future<T> m_future;
+        walli::rstd::unique_function<void(const std::exception&)> m_failureCallback{};
     };
 
     template<typename T, typename U>
@@ -185,10 +185,10 @@ namespace robot2D {
     template<typename T>
     class TaskFuture {
     private:
-        using Result = collections::concurrency::Result<T>;
+        using Result = walli::concurrency::Result<T>;
     public:
-        TaskFuture(collections::concurrency::iexecutor* iexecutor,
-                            collections::concurrency::future<T>&& f): m_future(std::move(f)), m_mainExecutor{iexecutor} {}
+        TaskFuture(walli::concurrency::iexecutor* iexecutor,
+                            walli::concurrency::future<T>&& f): m_future(std::move(f)), m_mainExecutor{iexecutor} {}
 
         template<typename Func>
         auto then(Func&& func) && -> TaskFuture<decltype(func(std::declval<T>()))> {
@@ -217,8 +217,8 @@ namespace robot2D {
         }
 
     private:
-        collections::concurrency::future<T> m_future;
-        collections::concurrency::iexecutor* m_mainExecutor{ nullptr };
+        walli::concurrency::future<T> m_future;
+        walli::concurrency::iexecutor* m_mainExecutor{ nullptr };
     };
 
 
@@ -228,7 +228,7 @@ namespace robot2D {
         Background = 2
     };
 
-    class TaskDispatcher: public collections::concurrency::iexecutor {
+    class TaskDispatcher: public walli::concurrency::iexecutor {
     private:
         template<typename T>
         class TaskHolder {
@@ -278,7 +278,7 @@ namespace robot2D {
             auto task = std::make_shared<T>(std::forward<Args>(args)...);
 
             TaskHolder<T> holder{std::move(task)};
-            auto f = collections::concurrency::async(m_pool, std::move(holder))
+            auto f = walli::concurrency::async(m_pool, std::move(holder))
                     .recover(m_pool, [](auto&& error) {
                         error.throwIfError();
                         return std::shared_ptr<T>(nullptr);
@@ -293,7 +293,7 @@ namespace robot2D {
             auto task = std::make_shared<T>(std::forward<Args>(args)...);
 
             TaskHolder<T> holder{std::move(task)};
-            auto f = collections::concurrency::async(m_pool, std::move(holder))
+            auto f = walli::concurrency::async(m_pool, std::move(holder))
                     .recover(m_pool, [](auto&& error) {
                         error.throwIfError();
                         return std::shared_ptr<T>(nullptr);
@@ -301,18 +301,18 @@ namespace robot2D {
             return std::move(f);
         }
 
-        void execute(collections::concurrency::Task task) override {
+        void execute(walli::concurrency::Task task) override {
             m_blockqueue.push(std::move(task));
         }
 
 
     private:
-        using ExecuteTask = collections::concurrency::Task;
+        using ExecuteTask = walli::concurrency::Task;
         friend class TaskDispatcherWrapper;
 
-        collections::concurrency::thread_pool m_pool;
+        walli::concurrency::thread_pool m_pool;
         //collections::concurrency::blocking_threadsafe_queue<ExecuteTask, TaskDispatcherAllocator> m_blockqueue;
-        collections::concurrency::dummy_threadsafe_queue<ExecuteTask> m_blockqueue;
+        walli::concurrency::dummy_threadsafe_queue<ExecuteTask> m_blockqueue;
     };
 
 
@@ -377,17 +377,17 @@ namespace robot2D {
 
 
 
-class MainThreadExecutor: public  collections::concurrency::iexecutor {
+class MainThreadExecutor: public  walli::concurrency::iexecutor {
 public:
     ~MainThreadExecutor() override = default;
 
-    void execute(collections::concurrency::Task task) override {
+    void execute(walli::concurrency::Task task) override {
         m_taskQueue.push(std::move(task));
     }
 
     void process() {
         while(!m_taskQueue.empty()) {
-            collections::concurrency::Task t;
+            walli::concurrency::Task t;
             if(m_taskQueue.try_pop(t)) {
                 t();
             }
@@ -397,7 +397,7 @@ public:
     int getCallCount() { return m_taskQueue.size(); }
 private:
     int m_calls { 0 };
-    collections::concurrency::dummy_threadsafe_queue<collections::concurrency::Task> m_taskQueue;
+    walli::concurrency::dummy_threadsafe_queue<walli::concurrency::Task> m_taskQueue;
 
 };
 
@@ -405,7 +405,7 @@ private:
 
 void futures_benchmark() {
 
-    collections::concurrency::thread_pool m_pool{ 4 };
+    walli::concurrency::thread_pool m_pool{ 4 };
     MainThreadExecutor mainThreadExecutor;
 
     constexpr int asyncOpsValue = 100000;
@@ -415,19 +415,19 @@ void futures_benchmark() {
             return 40;
         };
 
-        auto func2 = [](collections::concurrency::Result<int>&& result) {
+        auto func2 = [](walli::concurrency::Result<int>&& result) {
             auto val = result.ValueOrThrow();
             return val + 1;
         };
-        auto func3 = [](collections::concurrency::Result<int>&& result) {
+        auto func3 = [](walli::concurrency::Result<int>&& result) {
             auto val = result.ValueOrThrow();
             return val + 1;
         };
-        auto func4 = [](collections::concurrency::Result<int>&& result) {
+        auto func4 = [](walli::concurrency::Result<int>&& result) {
             assert(result.ValueOrThrow() == 42);
         };
 
-        collections::concurrency::async(m_pool, std::move(func1))
+        walli::concurrency::async(m_pool, std::move(func1))
                 .then(m_pool, std::move(func2))
                 .then(m_pool, std::move(func3))
                 .via(&mainThreadExecutor)
@@ -495,8 +495,8 @@ void stressDispatcher() {
 
 
 namespace {
-    collections::concurrency::dummy_threadsafe_queue<int> g_dummyQueue;
-    collections::concurrency::blocking_threadsafe_queue<int> g_Queue;
+    walli::concurrency::dummy_threadsafe_queue<int> g_dummyQueue;
+    walli::concurrency::blocking_threadsafe_queue<int> g_Queue;
 
 
     constexpr int opsValue = 10001; // 200 400 800 1600

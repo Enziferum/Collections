@@ -2,7 +2,7 @@
 #include <deque>
 #include <memory>
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     template<typename T>
     class work_stealing_queue {
@@ -54,4 +54,4 @@ namespace collections::concurrency {
         mutable std::mutex m_mutex;
     };
 
-} // namespace collections::concurrency
+} // namespace walli::concurrency

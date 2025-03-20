@@ -3,7 +3,7 @@
 
 #include "error.hpp"
 
-namespace collections::concurrency {
+namespace walli::concurrency {
     namespace detail {
         template<typename T>
         class ValueStorage {

@@ -35,7 +35,7 @@ namespace  {
 }
 
 TEST(rstd, unique_function_void_return_test) {
-    collections::rstd::unique_function<void()> f = []() {
+    walli::rstd::unique_function<void()> f = []() {
         int a = 2;
         ++a;
         EXPECT_EQ(a, 3);
@@ -45,7 +45,7 @@ TEST(rstd, unique_function_void_return_test) {
 }
 
 TEST(rstd, unique_function_value_return_test) {
-    collections::rstd::unique_function<int()> f = []() -> int {
+    walli::rstd::unique_function<int()> f = []() -> int {
         int a = 42;
         ++a;
         return a;
@@ -55,14 +55,14 @@ TEST(rstd, unique_function_value_return_test) {
 }
 
 TEST(rstd, unique_function_void_return_input_value_test) {
-    collections::rstd::unique_function<void(int)> f = [](int a){
+    walli::rstd::unique_function<void(int)> f = [](int a){
         ++a;
         EXPECT_EQ(a, 43);
     };
 }
 
 TEST(rstd, unique_function_value_return_input_value_test) {
-    collections::rstd::unique_function<int(int)> f = [](int a) {
+    walli::rstd::unique_function<int(int)> f = [](int a) {
         ++a;
         return a;
     };
@@ -70,7 +70,7 @@ TEST(rstd, unique_function_value_return_input_value_test) {
 }
 
 TEST(rstd, move_unique_function_void_return_input_value_test) {
-    collections::rstd::unique_function<void(int)> f = [](int a) {
+    walli::rstd::unique_function<void(int)> f = [](int a) {
         ++a;
         EXPECT_EQ(a, 43);
     };
@@ -80,7 +80,7 @@ TEST(rstd, move_unique_function_void_return_input_value_test) {
 }
 
 TEST(rstd, move_unique_function_value_return_input_value_test) {
-    collections::rstd::unique_function<int(int)> f = [](int a) {
+    walli::rstd::unique_function<int(int)> f = [](int a) {
         ++a;
         return a;
     };
@@ -94,7 +94,7 @@ TEST(rstd, unique_function_value_return_input_value_custom_type_test) {
         int a;
     };
 
-    collections::rstd::unique_function<int(A)> f = [](A a) {
+    walli::rstd::unique_function<int(A)> f = [](A a) {
         ++a.a;
         return a.a;
     };
@@ -110,7 +110,7 @@ TEST(rstd, move_unique_function_value_return_input_value_custom_type_non_pod_typ
         virtual void f() {}
     };
 
-    collections::rstd::unique_function<int(A)> f = [](A a) {
+    walli::rstd::unique_function<int(A)> f = [](A a) {
         ++a.a;
         return a.a;
     };
@@ -121,14 +121,14 @@ TEST(rstd, move_unique_function_value_return_input_value_custom_type_non_pod_typ
 }
 
 TEST(rstd, unique_function_value_return_input_value_custom_type_standard_function_test) {
-    collections::rstd::unique_function<int(TestA)> f = &sum_func;
+    walli::rstd::unique_function<int(TestA)> f = &sum_func;
 
     TestA test_a{42};
     EXPECT_EQ(f(std::move(test_a)), 43);
 }
 
 TEST(rstd, move_unique_function_value_return_input_value_custom_type_standard_function_test) {
-    collections::rstd::unique_function<int(TestA)> f = &sum_func;
+    walli::rstd::unique_function<int(TestA)> f = &sum_func;
 
     TestA test_a{42};
     auto f1 = std::move(f);
@@ -136,14 +136,14 @@ TEST(rstd, move_unique_function_value_return_input_value_custom_type_standard_fu
 }
 
 TEST(rstd, unique_function_value_return_input_value_custom_type_functor_test) {
-    collections::rstd::unique_function<int(TestA)> f = TestAFunctor();
+    walli::rstd::unique_function<int(TestA)> f = TestAFunctor();
 
     TestA test_a{42};
     EXPECT_EQ(f(std::move(test_a)), 43);
 }
 
 TEST(rstd, move_unique_function_value_return_input_value_custom_type_functor_test) {
-    collections::rstd::unique_function<int(TestA)> f = TestAFunctor();
+    walli::rstd::unique_function<int(TestA)> f = TestAFunctor();
 
     TestA test_a{42};
     auto f1 = std::move(f);
@@ -153,7 +153,7 @@ TEST(rstd, move_unique_function_value_return_input_value_custom_type_functor_tes
 TEST(rstd, unique_function_capture_move_only_test) {
     std::unique_ptr<int> u_ptr = std::make_unique<int>(42);
 
-    collections::rstd::unique_function<void()> f = [u_ptr = std::move(u_ptr)]() {
+    walli::rstd::unique_function<void()> f = [u_ptr = std::move(u_ptr)]() {
         (*u_ptr)++;
         EXPECT_EQ(*u_ptr, 43);
     };
@@ -164,7 +164,7 @@ TEST(rstd, unique_function_capture_move_only_test) {
 TEST(rstd, move_unique_function_capture_move_only_test) {
     std::unique_ptr<int> u_ptr = std::make_unique<int>(42);
 
-    collections::rstd::unique_function<void()> f = [u_ptr = std::move(u_ptr)]() {
+    walli::rstd::unique_function<void()> f = [u_ptr = std::move(u_ptr)]() {
         (*u_ptr)++;
         EXPECT_EQ(*u_ptr, 43);
     };
@@ -174,8 +174,8 @@ TEST(rstd, move_unique_function_capture_move_only_test) {
 }
 
 TEST(rstd, unique_function_throw_no_callbable_test) {
-    collections::rstd::unique_function<void()> f;
+    walli::rstd::unique_function<void()> f;
     EXPECT_THAT([&f]() { f(); },
-                testing::ThrowsMessage<collections::rstd::unique_function_bad_callable>(
+                testing::ThrowsMessage<walli::rstd::unique_function_bad_callable>(
                         testing::HasSubstr("rstd::unique_function, create callable before invoke")));
 }

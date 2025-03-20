@@ -2,7 +2,7 @@
 #include <memory>
 #include "hazard_pointer.hpp"
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     /// \brief Guarding Allocations (base usage if construct throw exception deallocate and some catches exception)
     template<typename Allocator>

@@ -1,7 +1,7 @@
 #pragma once
 #include <walli/rstd/unique_function.hpp>
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     using Task = rstd::unique_function<void()>;
 

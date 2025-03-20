@@ -1,6 +1,6 @@
 #include <walli/concurrency/iexecutor.hpp>
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     iexecutor::~iexecutor() = default;
 

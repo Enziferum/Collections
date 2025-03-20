@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-namespace collections::memory {
+namespace walli::memory {
     template<typename T>
     class LogAllocator {
     public:

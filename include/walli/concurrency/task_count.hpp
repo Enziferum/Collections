@@ -2,7 +2,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     class TaskCount {
     public:

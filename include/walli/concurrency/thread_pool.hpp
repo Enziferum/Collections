@@ -11,7 +11,7 @@
 #include "future.hpp"
 #include "task_count.hpp"
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     class thread_pool: public iexecutor {
     public:

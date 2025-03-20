@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <new>
 
-namespace collections::concurrency::GC {
+namespace walli::concurrency::GC {
     namespace details {
 
         using hazard_ptr_handle = void*;

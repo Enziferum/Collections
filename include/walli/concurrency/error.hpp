@@ -4,7 +4,7 @@
 #include <system_error>
 #include <variant>
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     class Error {
     public:

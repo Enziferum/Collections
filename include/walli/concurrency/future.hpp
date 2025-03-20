@@ -16,7 +16,7 @@
 #include "iexecutor.hpp"
 #include "result.hpp"
 
-namespace collections::concurrency {
+namespace walli::concurrency {
     enum class future_error_type {};
 
     class future_error: public std::logic_error {

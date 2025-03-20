@@ -8,8 +8,8 @@ namespace {
         int a{0};
     };
 
-    struct TestExecutor: collections::concurrency::iexecutor {
-        void execute(collections::concurrency::Task task) override {
+    struct TestExecutor: walli::concurrency::iexecutor {
+        void execute(walli::concurrency::Task task) override {
             // no-op //
         }
     };

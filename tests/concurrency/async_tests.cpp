@@ -12,7 +12,7 @@ namespace {
             executor.join();
         }
     protected:
-        collections::concurrency::thread_pool executor{4};
+        walli::concurrency::thread_pool executor{4};
     };
 
     struct ThenRecoverException: public std::runtime_error {
@@ -27,10 +27,10 @@ namespace {
 TEST_F(ConcurrencyTest, test_async_subscribe) {
     auto testId = std::this_thread::get_id();
 
-    auto f = collections::concurrency::async(executor, []() -> int {
+    auto f = walli::concurrency::async(executor, []() -> int {
         std::this_thread::sleep_for(1s);
         return 41;
-    }).subscribe([](collections::concurrency::Result<int>&& result) {
+    }).subscribe([](walli::concurrency::Result<int>&& result) {
         int value = result.ValueOrThrow() + 1;
         EXPECT_EQ(value, 42);
     });
@@ -40,7 +40,7 @@ TEST_F(ConcurrencyTest, test_async_subscribe) {
 
 
 TEST_F(ConcurrencyTest, test_async) {
-    auto f = collections::concurrency::async(executor, []() -> int {
+    auto f = walli::concurrency::async(executor, []() -> int {
         return 42;
     });
 
@@ -48,9 +48,9 @@ TEST_F(ConcurrencyTest, test_async) {
 }
 
 TEST_F(ConcurrencyTest, test_async_single_then) {
-    auto f = collections::concurrency::async(executor, []() -> int {
+    auto f = walli::concurrency::async(executor, []() -> int {
         return 42;
-    }).then(executor, [](collections::concurrency::Result<int>&& result) {
+    }).then(executor, [](walli::concurrency::Result<int>&& result) {
         int val = result.ValueOrThrow();
         EXPECT_EQ(val, 42);
     });
@@ -59,13 +59,13 @@ TEST_F(ConcurrencyTest, test_async_single_then) {
 }
 
 TEST_F(ConcurrencyTest, test_async_chain_then) {
-    auto f = collections::concurrency::async(executor, []() -> int {
+    auto f = walli::concurrency::async(executor, []() -> int {
         return 41;
-    }).then(executor, [](collections::concurrency::Result<int>&& result) -> int {
+    }).then(executor, [](walli::concurrency::Result<int>&& result) -> int {
         int val = result.ValueOrThrow();
         EXPECT_EQ(val, 41);
         return val + 1;
-    }).then(executor, [](collections::concurrency::Result<int>&& result) {
+    }).then(executor, [](walli::concurrency::Result<int>&& result) {
         int val = result.ValueOrThrow();
         EXPECT_EQ(val, 42);
     });
@@ -80,16 +80,16 @@ TEST_F(ConcurrencyTest, test_async_then_recover_then) {
         return 40;
     };
     /// handle possible exception
-    auto second = [](collections::concurrency::Result<int>&& result) {
+    auto second = [](walli::concurrency::Result<int>&& result) {
         std::this_thread::sleep_for(1s);
         return 1;
     };
-    auto third = [](collections::concurrency::Result<int>&& result) {
+    auto third = [](walli::concurrency::Result<int>&& result) {
         std::this_thread::sleep_for(1s);
         int val = result.ValueOrThrow() + 1;
         EXPECT_EQ(val, 2);
     };
-    /*auto f = collections::concurrency::async(executor, first)
+    /*auto f = walli::concurrency::async(executor, first)
             .recover(executor, second)
             .then(executor, third);*/
 

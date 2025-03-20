@@ -12,7 +12,7 @@
     #include <thread>
 #endif
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
 #ifdef USE_TWIST
     using mutex = twist::ed::stdlike::mutex;

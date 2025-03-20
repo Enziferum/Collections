@@ -4,7 +4,7 @@
 #include <memory>
 #include <mutex>
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     /// \brief Dummy Realization ThreadSafe Queue based on mutex and std::queue
     template<typename T>

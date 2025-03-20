@@ -20,7 +20,7 @@
 
 
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     thread_local unsigned thread_pool::m_threadIndex = 0;
     thread_local thread_pool::TaskStealingQueue* thread_pool::m_localQueue = nullptr;

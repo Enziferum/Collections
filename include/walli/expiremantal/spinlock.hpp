@@ -9,7 +9,7 @@
 #    include <immintrin.h> // _mm_pause()
 #endif
 
-namespace collections::rstd {
+namespace walli::rstd {
     /// \brief TTAS ( test && test&set) model
     /// \brief inside futures +25-40% speed vs std::mutex
     class spinlock {
@@ -95,4 +95,4 @@ namespace collections::rstd {
     private:
         T& m_lock;
     };
-} // namespace collections::rstd
+} // namespace walli::rstd

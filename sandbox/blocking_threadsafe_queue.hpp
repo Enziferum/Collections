@@ -6,7 +6,7 @@
 #include <walli/expiremantal/spinlock.hpp>
 
 
-namespace collections::concurrency {
+namespace walli::concurrency {
 
     template<typename T>
     class intrusive_blocking_threadsafe_queue {

@@ -3,7 +3,7 @@
 #include <type_traits>
 #include <stdexcept>
 
-namespace collections::rstd {
+namespace walli::rstd {
 
     struct unique_function_bad_callable: std::logic_error {
         explicit unique_function_bad_callable(const std::string& message): std::logic_error(message){}
@@ -162,11 +162,11 @@ namespace collections::rstd {
 
     template<typename ...Args>
     unique_function<void(Args...)>::~unique_function() noexcept = default;
-}
+} // namespace walli::rstd
 
 namespace std {
     template<typename Signature>
-    inline void swap(collections::rstd::unique_function<Signature>& left, collections::rstd::unique_function<Signature>& right) {
+    inline void swap(walli::rstd::unique_function<Signature>& left, walli::rstd::unique_function<Signature>& right) {
         left.swap(right);
     }
 }
