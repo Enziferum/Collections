@@ -16,4 +16,4 @@ if(USE_TSAN)
 endif()
 
 add_executable(${PROJECT_NAME} ${SRC})
-target_link_libraries(${PROJECT_NAME} PRIVATE Collections)
+target_link_libraries(${PROJECT_NAME} PRIVATE Walli)

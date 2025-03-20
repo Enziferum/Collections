@@ -5,6 +5,7 @@
 #include <variant>
 
 namespace collections::concurrency {
+
     class Error {
     public:
         Error(): m_error(std::monostate()){}
@@ -34,4 +35,5 @@ namespace collections::concurrency {
     private:
         std::variant<std::monostate, std::exception_ptr, std::error_code> m_error;
     };
+
 } // namespace collections::concurrency

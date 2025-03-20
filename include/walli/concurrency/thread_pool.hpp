@@ -45,7 +45,7 @@ namespace collections::concurrency {
         static thread_local TaskStealingQueue* m_localQueue;
         static thread_local unsigned m_threadIndex;
 
-        thread_local unsigned m_tasksDone;
+        static inline thread_local unsigned m_tasksDone = { 0 };
 
         std::atomic_bool m_done { false };
         TaskCount m_taskCount;

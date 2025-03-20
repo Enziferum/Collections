@@ -4,10 +4,10 @@
 #include <climits>
 #include <complex>
 
-#include <collections/concurrency/thread_pool.hpp>
-#include <collections/concurrency/future.hpp>
-#include <collections/queue/lockfree_queue.hpp>
-#include <collections/util/fmt.hpp>
+#include <walli/concurrency/thread_pool.hpp>
+#include <walli/concurrency/future.hpp>
+#include <walli/queue/lockfree_queue.hpp>
+#include <walli/util/fmt.hpp>
 
 #include "benchmark.hpp"
 #include "blocking_threadsafe_queue.hpp"

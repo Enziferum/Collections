@@ -3,7 +3,7 @@
 #include <mutex>
 #include <thread>
 
-#include <collections/expiremantal/spinlock.hpp>
+#include <walli/expiremantal/spinlock.hpp>
 
 
 namespace collections::concurrency {

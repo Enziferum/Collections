@@ -23,7 +23,8 @@ file(GLOB_RECURSE SRC source/*.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${INCL} ${SRC})
 target_include_directories(${PROJECT_NAME} PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+)
 
 set(LIBS)
 if (WALLI_USE_TWIST)
